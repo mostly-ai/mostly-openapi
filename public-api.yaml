@@ -3023,11 +3023,9 @@ components:
           default: true
         rareCategoryReplacementMethod:
           description: |
-            Specifies how rare categories will be sampled.
-            Only applicable if value protection has been enabled.
-    
-            - `CONSTANT`: Replace rare categories by a constant `_RARE_` token.
-            - `SAMPLE`: Replace rare categories by a sample from non-rare categories.
+            Specifies, if the rare categories for categoricals will be replaced by a constant
+            _RARE_ or by a sample from non-rare categories.
+            Only applicable if valueProtection is set to True.
           type: "string"
           enum:
             - "CONSTANT"
