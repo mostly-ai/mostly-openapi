@@ -82,129 +82,10 @@ paths:
         Create a connector, and optionally validate the connection before saving.
 
         If validation fails, a 400 status with an error message will be returned.
-
-        The structures of the config, secrets and ssl parameters depend on the connector type.
-
-        - Cloud storage:
-          ```yaml
-          - type: AZURE_STORAGE
-            config:
-              accountName: string
-              clientId: string (required for auth via service principal)
-              tenantId: string (required for auth via service principal)
-            secrets:
-              accountKey: string (required for regular auth)
-              clientSecret: string (required for auth via service principal)
-
-          - type: GOOGLE_CLOUD_STORAGE
-            config:
-            secrets:
-              keyFile: string
-
-          - type: S3_STORAGE
-            config:
-              accessKey: string
-              endpointUrl: string (only needed for S3-compatible storage services other than AWS)
-              sslEnabled: boolean, default: false
-            secrets:
-              secretKey: string
-            ssl:
-              caCertificate: base64-encoded string              
-          ```
-        - Database:
-          ```yaml
-          - type: BIGQUERY
-            config:
-            secrets:
-              keyFile: string
-
-          - type: DATABRICKS
-            config:
-              host: string
-              httpPath: string
-              catalog: string
-              clientId: string (required for auth via service principal)
-              tenantId: string (required for auth via service principal)
-            secrets:
-              accessToken: string (required for regular auth)
-              clientSecret: string (required for auth via service principal)
-
-          - type: HIVE
-            config:
-              host: string
-              port: integer, default: 10000
-              username: string (required for regular auth)
-              kerberosEnabled: boolean, default: false
-              kerberosServicePrincipal: string (required if kerberosEnabled)
-              kerberosClientPrincipal: string (optional if kerberosEnabled)              
-              kerberosKrb5Conf: string (required if kerberosEnabled)
-              sslEnabled: boolean, default: false
-            secrets:
-              password: string (required for regular auth)
-              kerberosKeytab: base64-encoded string (required if kerberosEnabled)
-            ssl:
-              caCertificate: base64-encoded string
-
-          - type: MARIADB
-            config:
-              host: string
-              port: integer, default: 3306
-              username: string
-            secrets:
-              password: string
-
-          - type: MSSQL
-            config:
-              host: string
-              port: integer, default: 1433
-              username: string
-              database: string
-            secrets:
-             password: string
-
-          - type: MYSQL
-            config:
-              host: string
-              port: integer, default: 3306
-              username: string
-            secrets:
-              password: string
-
-          - type: ORACLE
-            config:
-              host: string
-              port: integer, default: 1521
-              username: string
-              connectionType: enum {SID, SERVICE_NAME}, default: SID
-              database: string, default: ORCL
-            secrets:
-              password: string
-
-          - type: POSTGRES
-            config:
-              host: string
-              port: integer, default: 5432
-              username: string
-              database: string
-              sslEnabled: boolean, default: false
-            secrets:
-              password: string
-            ssl:
-              rootCertificate: base64-encoded string 
-              sslCertificate: base64-encoded string
-              sslCertificateKey: base64-encoded string
-
-          - type: SNOWFLAKE
-            config:
-              account: string
-              username: string
-              warehouse: string, default: COMPUTE_WH
-              database: string
-            secrets:
-              password: string
-          ```
       operationId: "createConnector"
       tags: [ "Connectors" ]
+      parameters:
+      - $ref: "#/components/parameters/testConnection"
       requestBody:
         required: true
         content:
@@ -240,10 +121,10 @@ paths:
         Update a connector, and optionally validate the connection before saving.
 
         If validation fails, a 400 status with an error message will be returned.
-
-        For the structure of the config, secrets and ssl parameters, see the CREATE method.
       operationId: "patchConnector"
       tags: [ "Connectors" ]
+      parameters:
+        - $ref: "#/components/parameters/testConnection"
       requestBody:
         required: true
         content:
@@ -1531,13 +1412,13 @@ paths:
         content:
           multipart/form-data:
             schema:
-              type: object
+              type: "object"
               properties:
                 file:
-                  type: string
-                  format: binary
+                  type: "string"
+                  format: "binary"
               required:
-                - file
+                - "file"
       responses:
         "200":
           description: "OK"
@@ -1779,22 +1660,14 @@ paths:
   /about:
     get:
       summary: "Retrieve general info about service"
-      operationId: "getAboutApplication"
+      operationId: "getAboutService"
       responses:
         "200":
           description: "OK"
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  version:
-                    type: string
-                    description: Version number of the service
-                    example: "v209"
-                  assistant:
-                    type: boolean
-                    description: Is the assistant service available
+                $ref: "#/components/schemas/AboutService"
   /usage-report/periods:
     get:
       summary: "Retrieve usage report by Periods"
@@ -1972,7 +1845,7 @@ components:
           - "assistant-threads"
     connectorIdPath:
       name: "id"
-      description: "The unique identifier of a connector"
+      description: "The unique identifier of a connector."
       in: "path"
       required: true
       schema:
@@ -2037,81 +1910,91 @@ components:
       required: true
     generatorIdPath:
       name: "id"
-      description: "The unique identifier of a generator"
+      description: "The unique identifier of a generator."
       in: "path"
       required: true
       schema:
         type: "string"
     stepIdPath:
       name: "stepId"
-      description: "The unique identifier of a step"
+      description: "The unique identifier of a step."
       in: "path"
       required: true
       schema:
         type: "string"
     sourceTableIdPath:
       name: "tableId"
-      description: "The unique identifier of a source table"
+      description: "The unique identifier of a source table."
       in: "path"
       required: true
       schema:
         type: "string"
     sourceColumnIdPath:
       name: "columnId"
-      description: "The unique identifier of a source column"
+      description: "The unique identifier of a source column."
       in: "path"
       required: true
       schema:
         type: "string"
     sourceForeignKeyIdPath:
       name: "foreignKeyId"
-      description: "The unique identifier of a source foreign key"
+      description: "The unique identifier of a source foreign key."
       in: "path"
       required: true
       schema:
         type: "string"
     syntheticDatasetIdPath:
       name: "id"
-      description: "The unique identifier of a synthetic dataset"
+      description: "The unique identifier of a synthetic dataset."
       in: "path"
       required: true
       schema:
         type: "string"
     syntheticTableIdPath:
       name: "tableId"
-      description: "The unique identifier of a synthetic table"
+      description: "The unique identifier of a synthetic table."
       in: "path"
       required: true
       schema:
         type: "string"
     assistantThreadIdPath:
       name: "id"
-      description: "The unique identifier of a assistant thread"
+      description: "The unique identifier of a assistant thread."
       in: "path"
       required: true
       schema:
         type: "string"
     computeIdPath:
       name: "id"
-      description: "The unique identifier of a compute"
+      description: "The unique identifier of a compute."
       in: "path"
       required: true
       schema:
         type: "string"
+    testConnection:
+      name: "testConnection"
+      description: |
+        If true, the connection will be tested before saving. In case of error, the connector will not be saved.
+        If false, the connection will not be tested.
+      in: "query"
+      schema:
+        type: "boolean"
+        default: true
 
   schemas:
 
     # Generic components
     BaseResource:
       type: "object"
+      description: "A set of common properties across resources."
       properties:
         id:
           type: "string"
           format: "uuid"
-          description: "The unique identifier of the entity"
+          description: "The unique identifier of the entity."
         name:
           type: "string"
-          description: "The name of the entity"
+          description: "The name of the entity."
         uri:
           $ref: "#/components/schemas/BaseResourceUri"
         currentUserPermissionLevel:
@@ -2122,6 +2005,19 @@ components:
       type: "string"
       description: "The API service endpoint of the entity"
       example: "/generators/94c77249-42bf-443a-8e17-6e18a19d60b8"
+
+    # SYSTEM
+    AboutService:
+      type: "object"
+      description: "General information about the service."
+      properties:
+        version:
+          type: "string"
+          description: "The version number of the service."
+          example: "v209"
+        assistant:
+          type: "boolean"
+          description: "A flag indicating if the assistant is enabled."
 
     # SHARES
     Share:
@@ -2161,6 +2057,7 @@ components:
     # USERS
     User:
       type: "object"
+      description: "A user of the service."
       properties:
         id:
           $ref: "#/components/schemas/UserId"
@@ -2173,7 +2070,7 @@ components:
     UserId:
       type: "string"
       format: "uuid"
-      description: "The unique identifier of a user"
+      description: "The unique identifier of a user."
     UserFirstName:
       type: "string"
       description: "First name of a user"
@@ -2191,11 +2088,10 @@ components:
     PermissionLevel:
       type: "string"
       description: |
-        The permission level of the user or group with respect to this entity
-        - VIEW: The user can view and use the entity
-        - EDIT: The user can edit and share the entity
-        - ADMIN: The user can edit, share and delete the entity
-        There is only a single user per entity with ADMIN rights, and that user is the owner of the entity.
+        The permission level of the user with respect to this resource
+
+        - `VIEW`: The user can view and use the resource
+        - `ADMIN`: The user can edit, delete and transfer ownership of the resource
       enum:
         - "VIEW"
         - "EDIT"
@@ -2205,6 +2101,7 @@ components:
         description: A boolean indicating whether the user has liked the entity or not
     CurrentUser:
       type: "object"
+      description: "Information on the current user."
       properties:
         id:
           $ref: "#/components/schemas/UserId"
@@ -2222,10 +2119,11 @@ components:
           $ref: "#/components/schemas/UserUnreadNotifications"
     UserSettings:
       type: "object"
-      description: "Additional optional user settings"
+      description: "Additional optional user settings."
       additionalProperties: { }
     UserSettingsUpdateConfig:
       type: "object"
+      description: "The configuration for updating user settings."
       properties:
         profile:
           $ref: "#/components/schemas/UserSettingsProfileUpdateConfig"
@@ -2282,29 +2180,30 @@ components:
           type: "object"
           properties:
             current:
-              description: "The number of currently running generation jobs"
+              description: "The number of currently running generation jobs."
               type: "integer"
             limit:
               description: "The maximum number of running generation jobs at any time. If empty, then there is no limit."
               type: "integer"
     Notification:
       type: "object"
+      description: "A notification for a user."
       properties:
         id:
           type: "string"
           format: "uuid"
-          description: "The unique identifier of the notification"
+          description: "The unique identifier of the notification."
         type:
           $ref: "#/components/schemas/NotificationType"
         message:
           type: "string"
-          description: "The message of the notification"
+          description: "The message of the notification."
         status:
           $ref: "#/components/schemas/NotificationStatus"
         createdAt:
           type: "string"
           format: "date-time"
-          description: "The UTC date and time when the notification has been created"
+          description: "The UTC date and time when the notification has been created."
         resourceUri:
           $ref: "#/components/schemas/BaseResourceUri"
       required:
@@ -2315,7 +2214,7 @@ components:
         - "createdAt"
     NotificationStatus:
       type: "string"
-      description: "The status of the notification"
+      description: "The status of the notification."
       enum:
         - "UNREAD"
         - "READ"
@@ -2329,6 +2228,7 @@ components:
         - "RESOURCE_FAILED"
     Metadata:
       type: "object"
+      description: "The metadata of a resource."
       readOnly: true
       properties:
         createdAt:
@@ -2339,10 +2239,10 @@ components:
           example: "2023‐09‐07T18:40:39Z"
         ownerId:
           type: "string"
-          description: "The unique identifier of the owner of the entity"
+          description: "The unique identifier of the owner of the entity."
         ownerName:
           type: "string"
-          description: "The name of the owner of the entity"
+          description: "The name of the owner of the entity."
         currentUserPermissionLevel:
           $ref: "#/components/schemas/PermissionLevel"
         currentUserLikeStatus:
@@ -2356,63 +2256,42 @@ components:
     PaginatedTotalCount:
       type: "integer"
       description: "The total number of entities within the list"
-    ModelEncodingType:
-      type: "string"
-      description: |
-        The encoding type used for model training and data generation.
-        
-        - `AUTO`: Model chooses among available encoding types based on the column's data type.
-        - `TABULAR_CATEGORICAL`: Model samples from existing (non-rare) categories.
-        - `TABULAR_NUMERIC_AUTO`: Model chooses among 3 numeric encoding types based on the values.
-        - `TABULAR_NUMERIC_DISCRETE`: Model samples from existing discrete numerical values.
-        - `TABULAR_NUMERIC_BINNED`: Model samples from binned buckets, to then sample randomly within a bucket.
-        - `TABULAR_NUMERIC_DIGIT`: Model samples each digit of a numerical value.
-        - `TABULAR_CHARACTER`: Model samples each character of a string value.
-        - `TABULAR_DATETIME`: Model samples each part of a datetime value.
-        - `TABULAR_DATETIME_RELATIVE`: Model samples the relative difference between datetimes within a sequence.
-        - `TABULAR_LAT_LONG`: Model samples a latitude-longitude column. The format is "latitude,longitude".
-        - `LANGUAGE_TEXT`: Model will train a distinct LANGUAGE model for this column, to then generate free text.
-
-        Encoding types, that are not being prefixed with either `TABULAR` or `LANGUAGE` have been deprecated.
-      enum:
-        - "AUTO"
-        - "TABULAR_CATEGORICAL"
-        - "TABULAR_NUMERIC_AUTO"
-        - "TABULAR_NUMERIC_DISCRETE"
-        - "TABULAR_NUMERIC_BINNED"
-        - "TABULAR_NUMERIC_DIGIT"
-        - "TABULAR_CHARACTER"
-        - "TABULAR_DATETIME"
-        - "TABULAR_DATETIME_RELATIVE"
-        - "TABULAR_LAT_LONG"
-        - "LANGUAGE_TEXT"
-        - "CATEGORICAL"        # deprecated, use "TABULAR_CATEGORICAL"
-        - "NUMERIC_AUTO"       # deprecated, use "TABULAR_NUMERIC_AUTO"
-        - "NUMERIC_DISCRETE"   # deprecated, use "TABULAR_NUMERIC_DISCRETE"
-        - "NUMERIC_BINNED"     # deprecated, use "TABULAR_NUMERIC_BINNED"
-        - "NUMERIC_DIGIT"      # deprecated, use "TABULAR_NUMERIC_DIGIT"
-        - "CHARACTER"          # deprecated, use "TABULAR_CHARACTER"
-        - "DATETIME"           # deprecated, use "TABULAR_DATETIME"
-        - "DATETIME_RELATIVE"  # deprecated, use "TABULAR_DATETIME_RELATIVE"
-        - "LAT_LONG"           # deprecated, use "TABULAR_LAT_LONG"
-      default: "AUTO"
 
     # CONNECTOR
     ConnectorId:
       type: "string"
       format: "uuid"
-      description: "The unique identifier of a connector"
+      description: "The unique identifier of a connector."
     ConnectorName:
       type: "string"
-      description: "The name of a connector"
+      description: "The name of a connector."
     ConnectorAccessType:
       type: "string"
+      description: "The access type of a connector. Either `SOURCE` or `DESTINATION`."
       enum:
         - "SOURCE"
         - "DESTINATION"
       default: "SOURCE"
     ConnectorType:
       type: "string"
+      description: |
+        The type of a connector. 
+        
+        The type determines the structure of the config, secrets and ssl parameters.
+        
+        - `MYSQL`: MySQL database
+        - `POSTGRES`: PostgreSQL database
+        - `MSSQL`: Microsoft SQL Server database
+        - `ORACLE`: Oracle database
+        - `MARIADB`: MariaDB database
+        - `SNOWFLAKE`: Snowflake cloud data platform
+        - `BIGQUERY`: Google BigQuery cloud data warehouse
+        - `HIVE`: Apache Hive database
+        - `DATABRICKS`: Databricks cloud data platform
+        - `AZURE_STORAGE`: Azure Blob Storage
+        - `GOOGLE_CLOUD_STORAGE`: Google Cloud Storage
+        - `S3_STORAGE`: Amazon S3 Storage
+        - `FILE_UPLOAD`: File upload
       enum:
         - "MYSQL"
         - "POSTGRES"
@@ -2421,12 +2300,12 @@ components:
         - "MARIADB"
         - "SNOWFLAKE"
         - "BIGQUERY"
+        - "HIVE"
         - "DATABRICKS"
         - "AZURE_STORAGE"
         - "GOOGLE_CLOUD_STORAGE"
         - "S3_STORAGE"
         - "FILE_UPLOAD"
-        - "HIVE"
     ConnectorConfigParams:
       description: |
         The config parameters contain any configuration of the connector.
@@ -2447,14 +2326,9 @@ components:
       type: "object"
       additionalProperties:
         type: "string"
-    ConnectorTestConnection:
-      type: "boolean"
-      description: |
-        If true, the connection will be tested before saving. In case of error, the connector will not be saved.
-        If false, the connection will not be tested.
-      default: true
     ConnectorUsage:
       type: "object"
+      description: "Usage statistics of a connector."
       properties:
         noOfShares:
           type: "integer"
@@ -2464,6 +2338,7 @@ components:
           description: "Number of generators using this connector."
     ConnectorListItem:
       type: "object"
+      description: "Essential connector details for listings."
       properties:
         id:
           $ref: "#/components/schemas/ConnectorId"
@@ -2485,6 +2360,8 @@ components:
         - "metadata"
     Connector:
       type: "object"
+      description: |
+        A connector is a connection to a data source or a data destination.
       properties:
         id:
           $ref: "#/components/schemas/ConnectorId"
@@ -2518,6 +2395,127 @@ components:
         - "accessType"
     ConnectorConfig:
       type: "object"
+      description: |
+        The structures of the config, secrets and ssl parameters depend on the connector type.
+
+        - Cloud storage:
+          ```yaml
+          - type: AZURE_STORAGE
+            config:
+              accountName: string
+              clientId: string (required for auth via service principal)
+              tenantId: string (required for auth via service principal)
+            secrets:
+              accountKey: string (required for regular auth)
+              clientSecret: string (required for auth via service principal)
+
+          - type: GOOGLE_CLOUD_STORAGE
+            config:
+            secrets:
+              keyFile: string
+
+          - type: S3_STORAGE
+            config:
+              accessKey: string
+              endpointUrl: string (only needed for S3-compatible storage services other than AWS)
+              sslEnabled: boolean, default: false
+            secrets:
+              secretKey: string
+            ssl:
+              caCertificate: base64-encoded string              
+          ```
+        - Database:
+          ```yaml
+          - type: BIGQUERY
+            config:
+            secrets:
+              keyFile: string
+
+          - type: DATABRICKS
+            config:
+              host: string
+              httpPath: string
+              catalog: string
+              clientId: string (required for auth via service principal)
+              tenantId: string (required for auth via service principal)
+            secrets:
+              accessToken: string (required for regular auth)
+              clientSecret: string (required for auth via service principal)
+
+          - type: HIVE
+            config:
+              host: string
+              port: integer, default: 10000
+              username: string (required for regular auth)
+              kerberosEnabled: boolean, default: false
+              kerberosServicePrincipal: string (required if kerberosEnabled)
+              kerberosClientPrincipal: string (optional if kerberosEnabled)              
+              kerberosKrb5Conf: string (required if kerberosEnabled)
+              sslEnabled: boolean, default: false
+            secrets:
+              password: string (required for regular auth)
+              kerberosKeytab: base64-encoded string (required if kerberosEnabled)
+            ssl:
+              caCertificate: base64-encoded string
+
+          - type: MARIADB
+            config:
+              host: string
+              port: integer, default: 3306
+              username: string
+            secrets:
+              password: string
+
+          - type: MSSQL
+            config:
+              host: string
+              port: integer, default: 1433
+              username: string
+              database: string
+            secrets:
+             password: string
+
+          - type: MYSQL
+            config:
+              host: string
+              port: integer, default: 3306
+              username: string
+            secrets:
+              password: string
+
+          - type: ORACLE
+            config:
+              host: string
+              port: integer, default: 1521
+              username: string
+              connectionType: enum {SID, SERVICE_NAME}, default: SID
+              database: string, default: ORCL
+            secrets:
+              password: string
+
+          - type: POSTGRES
+            config:
+              host: string
+              port: integer, default: 5432
+              username: string
+              database: string
+              sslEnabled: boolean, default: false
+            secrets:
+              password: string
+            ssl:
+              rootCertificate: base64-encoded string 
+              sslCertificate: base64-encoded string
+              sslCertificateKey: base64-encoded string
+
+          - type: SNOWFLAKE
+            config:
+              account: string
+              username: string
+              warehouse: string, default: COMPUTE_WH
+              database: string
+            secrets:
+              password: string
+          ```
       properties:
         name:
           $ref: "#/components/schemas/ConnectorName"
@@ -2531,12 +2529,12 @@ components:
           $ref: "#/components/schemas/ConnectorSecretsParams"
         ssl:
           $ref: "#/components/schemas/ConnectorSslParams"
-        testConnection:
-          $ref: "#/components/schemas/ConnectorTestConnection"
       required:
         - "type"
     ConnectorPatchConfig:
       type: "object"
+      description: |
+        See ConnectorConfig for details on the structure of the connection parameters.
       properties:
         name:
           $ref: "#/components/schemas/ConnectorName"
@@ -2546,20 +2544,18 @@ components:
           $ref: "#/components/schemas/ConnectorSecretsParams"
         ssl:
           $ref: "#/components/schemas/ConnectorSslParams"
-        testConnection:
-          $ref: "#/components/schemas/ConnectorTestConnection"
 
     # GENERATOR
     GeneratorId:
       type: "string"
       format: "uuid"
-      description: "The unique identifier of a generator"
+      description: "The unique identifier of a generator."
     GeneratorName:
       type: "string"
-      description: "The name of a generator"
+      description: "The name of a generator."
     GeneratorDescription:
       type: "string"
-      description: "The description of a generator"
+      description: "The description of a generator."
     GeneratorAccuracy:
       type: "number"
       format: "double"
@@ -2572,6 +2568,7 @@ components:
       format: "date-time"
     GeneratorUsage:
       type: "object"
+      description: "Usage statistics of a generator."
       properties:
         totalDatapoints:
           type: "integer"
@@ -2593,6 +2590,7 @@ components:
           description: "Number of likes of this generator."
     GeneratorListItem:
       type: "object"
+      description: "Essential generator details for listings."
       properties:
         id:
           $ref: "#/components/schemas/GeneratorId"
@@ -2614,6 +2612,10 @@ components:
         - "metadata"
     Generator:
       type: "object"
+      description: |
+        A generator is a set models that can generate synthetic data.
+        
+        The generator can be trained on one or more source tables. A quality assurance report is generated for each model.
       properties:
         id:
           $ref: "#/components/schemas/GeneratorId"
@@ -2644,13 +2646,13 @@ components:
     SourceTableId:
       type: "string"
       format: "uuid"
-      description: "The unique identifier of a source table"
+      description: "The unique identifier of a source table."
     SourceTableName:
       type: "string"
       description: "The name of a source table. It must be unique within a generator."
     SourceTablePrimaryKey:
-      type: string
-      description: The column name of the primary key
+      type: "string"
+      description: "The column name of the primary key."
     SourceTableLocation:
       type: "string"
       description: |
@@ -2672,6 +2674,7 @@ components:
       default: false
     SourceTable:
       type: "object"
+      description: "A table as part of a generator."
       properties:
         id:
           $ref: "#/components/schemas/SourceTableId"
@@ -2689,8 +2692,8 @@ components:
           items:
             $ref: "#/components/schemas/SourceColumn"
         foreignKeys:
-          type: array
-          description: The foreign keys of a table.
+          type: "array"
+          description: "The foreign keys of a table."
           items:
             $ref: "#/components/schemas/SourceForeignKey"
         modelMetrics:
@@ -2705,7 +2708,6 @@ components:
           $ref: "#/components/schemas/SourceTableTotalRows"
       required:
         - "id"
-        - "sourceConnectorId"
         - "name"
         - "columns"
         - "model"
@@ -2714,10 +2716,10 @@ components:
       type: "string"
       readOnly: true
       format: "uuid"
-      description: "The unique identifier of a source column"
+      description: "The unique identifier of a source column."
     SourceColumnName:
       type: "string"
-      description: "The name of a source column"
+      description: "The name of a source column."
     SourceColumnIncluded:
       type: "boolean"
       default: true
@@ -2725,17 +2727,18 @@ components:
         If true, the column will be included in the training.
         If false, the column will be excluded from the training.
     Probe:
-      type: object
+      type: "object"
+      description: "The generated synthetic samples returned as a result of the probe."
       properties:
         name:
-          type: string
-          description: The name of the table
+          type: "string"
+          description: "The name of the table."
         rows:
           $ref: "#/components/schemas/Samples"
     Samples:
-      type: array
+      type: "array"
       items:
-        type: object
+        type: "object"
         additionalProperties: true
     SourceColumnValueRange:
       description: |
@@ -2762,6 +2765,7 @@ components:
           description: "If true, null value was detected within the column."
     SourceColumn:
       type: "object"
+      description: "A column as part of a source table."
       properties:
         id:
           $ref: "#/components/schemas/SourceColumnId"
@@ -2780,18 +2784,18 @@ components:
         - "modelEncodingType"
     # Source ForeignKey
     SourceForeignKeyId:
-      type: string
+      type: "string"
       readOnly: true
-      format: uuid
-      description: The unique identifier of a foreign key
+      format: "uuid"
+      description: "The unique identifier of a foreign key."
     ForeignKeyColumn:
-      type: string
-      description: The column name of a foreign key.
+      type: "string"
+      description: "The column name of a foreign key."
     ForeignKeyReferencedTable:
-      type: string
-      description: The table name of the referenced table. That table must have a primary key already defined.
+      type: "string"
+      description: "The table name of the referenced table. That table must have a primary key already defined."
     ForeignKeyIsContext:
-      type: boolean
+      type: "boolean"
       description: |
         If true, then the foreign key will be considered as a context relation.
         Note, that only one foreign key relation per table can be a context relation.
@@ -2859,6 +2863,7 @@ components:
         - "file"
     SourceTableConfig:
       type: "object"
+      description: "The configuration for a source table when creating a new generator."
       properties:
         name:
           $ref: "#/components/schemas/SourceTableName"
@@ -2884,8 +2889,11 @@ components:
           description: "The column configurations of this table."
           items:
             $ref: "#/components/schemas/SourceColumnConfig"
+      required:
+        - "name"
     SourceTablePatchConfig:
       type: "object"
+      description: "The configuration for updating a source table."
       properties:
         name:
           $ref: "#/components/schemas/SourceTableName"
@@ -2914,17 +2922,17 @@ components:
           $ref: "#/components/schemas/ForeignKeyIsContext"
     SourceColumnConfig:
       type: "object"
+      description: "The configuration for a source column when creating a new generator."
       properties:
         name:
           $ref: "#/components/schemas/SourceColumnName"
-        included:
-          $ref: "#/components/schemas/SourceColumnIncluded"
         modelEncodingType:
           $ref: "#/components/schemas/ModelEncodingType"
       required:
         - "name"
     SourceColumnPatchConfig:
       type: "object"
+      description: "The configuration for updating a source column."
       properties:
         included:
           $ref: "#/components/schemas/SourceColumnIncluded"
@@ -2932,6 +2940,7 @@ components:
           $ref: "#/components/schemas/ModelEncodingType"
     SourceTableAddConfig:
       type: "object"
+      description: "The configuration for adding a new source table to a generator."
       properties:
         sourceConnectorId:
           $ref: "#/components/schemas/ConnectorId"
@@ -2952,22 +2961,16 @@ components:
     # MODEL
     ModelId:
       type: "string"
-      description:
-        The model to be used for training.
+      description: "The model to be used for training."
       example:
         - MOSTLY_AI/Small
         - MOSTLY_AI/Medium
         - MOSTLY_AI/Large
         - MOSTLY_AI/LSTMFromScratch-3m
         - microsoft/phi-1_5
-    ModelType:
-      type: "string"
-      enum:
-        - "TABULAR"
-        - "LANGUAGE"
     ModelConfiguration:
       type: "object"
-      description: "The training configuration for the AI model"
+      description: "The training configuration for the model"
       properties:
         model:
           $ref: "#/components/schemas/ModelId"
@@ -2986,13 +2989,15 @@ components:
           minimum: 1
           maximum: 1000000
         maxTrainingTime:
-          type: "integer"
+          type: "number"
+          format: "double"
           description: The maximum number of minutes to train the model.
           default: 10
           minimum: 0
           maximum: 100000
         maxEpochs:
-          type: "integer"
+          type: "number"
+          format: "double"
           description: The maximum number of epochs to train the model.
           default: 100
           minimum: 0
@@ -3018,149 +3023,25 @@ components:
           default: true
         rareCategoryReplacementMethod:
           description: |
-            Specifies, if the rare categories for categoricals will be replaced by a constant
-            _RARE_ or by a sample from non-rare categories.
-            Only applicable if valueProtection is set to True.
+            Specifies how rare categories will be sampled.
+            Only applicable if value protection has been enabled.
+    
+            - `CONSTANT`: Replace rare categories by a constant `_RARE_` token.
+            - `SAMPLE`: Replace rare categories by a sample from non-rare categories.
           type: "string"
           enum:
             - "CONSTANT"
             - "SAMPLE"
           default: "CONSTANT"
         differentialPrivacy:
-          $ref: "#/components/schemas/ModelConfigurationDifferentialPrivacy"
+          $ref: "#/components/schemas/DifferentialPrivacyConfig"
         compute:
           $ref: "#/components/schemas/ComputeId"
-    ModelConfigurationDifferentialPrivacy:
-      type: "object"
-      description: |
-        The optional differential privacy configuration for training the model. 
-        If not provided, then no differential privacy will be applied.
-      properties:
-        maxEpsilon:
-          type: "number"
-          format: "double"
-          description: |
-            Specifies the maximum allowable epsilon value. If the training process exceeds this threshold, it will be terminated early. Only model checkpoints with epsilon values below this limit will be retained. 
-            If not provided, the training will proceed without early termination based on epsilon constraints.
-          minimum: 0.0
-          maximum: 10000.0
-        noiseMultiplier:
-          type: "number"
-          format: "double"
-          description: |
-            The ratio of the standard deviation of the Gaussian noise to the L2-sensitivity of the function to which the noise is added (How much noise to add).
-          default: 1.5
-          minimum: 0.0
-          maximum: 10000.0
-        maxGradNorm:
-          type: "number"
-          format: "double"
-          description: |
-            The maximum norm of the per-sample gradients for training the model with differential privacy.
-          default: 1.0
-          minimum: 0.0
-          maximum: 10000.0
-    ModelMetrics:
-      type: "object"
-      properties:
-        accuracy:
-          type: "object"
-          properties:
-            overall:
-              description: |
-                The overall accuracy of the model.
-                This is the average of univariate, bivariate and coherence accuracies.
-                Accuracy is defined as (100% - Total Variation Distance) for each distribution, and then averaged across.
-              type: "number"
-              format: "double"
-              minimum: 0.0
-              maximum: 1.0
-            univariate:
-              description: |
-                The average accuracy of the discretized univariate distributions.
-              type: "number"
-              format: "double"
-              minimum: 0.0
-              maximum: 1.0
-            bivariate:
-              description: |
-                The average accuracy of the discretized bivariate distributions.
-              type: "number"
-              format: "double"
-              minimum: 0.0
-              maximum: 1.0
-            coherence:
-              description: |
-                The average accuracy of the discretized coherence distributions.
-                Only applicable for sequential models.
-              type: "number"
-              format: "double"
-              minimum: 0.0
-              maximum: 1.0
-            overallMax:
-              description: |
-                The expected accuracy of a holdout dataset of same size as synthetic dataset.
-                This serves as a reference for the overall accuracy of the trained generator.
-              type: "number"
-              format: "double"
-              minimum: 0.0
-              maximum: 1.0
-        distances:
-          type: "object"
-          properties:
-            dcrTraining:
-              description: "The average distance to closest record (L2) between synthetic and training samples within the embedding space."
-              type: "number"
-              format: "double"
-              minimum: 0.0
-            dcrHoldout:
-              description: "The average distance to closest record (L2) between synthetic and holdout samples within the embedding space."
-              type: "number"
-              format: "double"
-              minimum: 0.0
-            dcrOriginal:
-              description: "(DEPRECATED) The average DCR between the original records."
-              type: "number"
-              format: "double"
-              minimum: 0.0
-              deprecated: true
-            dcrSynthetic:
-              description: "(DEPRECATED) The average DCR between the synthetic and the original records."
-              type: "number"
-              format: "double"
-              minimum: 0.0
-              deprecated: true
-        similarity:
-          type: "object"
-          properties:
-            cosineSimilarityTrainingSynthetic:
-              description: "The cosine similarity between the training samples centroid and the synthetic samples centroid within the embedding space."
-              type: "number"
-              format: "double"
-              minimum: -1.0
-              maximum: 1.0
-            cosineSimilarityTrainingHoldout:
-              description: "The cosine similarity between the training samples centroid and the holdout samples centroid within the embedding space."
-              type: "number"
-              format: "double"
-              minimum: -1.0
-              maximum: 1.0
-            discriminatorAUCTrainingSynthetic:
-              description: "The cross-validated average AUC of discriminating between training embeddings ans synthetic embeddings."
-              type: "number"
-              format: "double"
-              minimum: 0.0
-              maximum: 1.0
-            discriminatorAUCTrainingHoldout:
-              description: "The cross-validated average AUC of discriminating between training embeddings ans holdout embeddings."
-              type: "number"
-              format: "double"
-              minimum: 0.0
-              maximum: 1.0
 
     # JOB_PROGRESS
     JobProgress:
       type: "object"
+      description: "The progress of a job."
       properties:
         id:
           type: "string"
@@ -3188,6 +3069,7 @@ components:
             $ref: "#/components/schemas/ProgressStep"
     ProgressStep:
       type: "object"
+      description: "The progress of a step."
       properties:
         id:
           type: "string"
@@ -3204,7 +3086,7 @@ components:
         restarts:
           type: "integer"
           format: "int32"
-          description: Number of previous restarts for the corresponding task.
+          description: "The number of previous restarts for the corresponding task."
         stepCode:
           type: "string"
           enum:
@@ -3256,14 +3138,15 @@ components:
       type: "string"
       description: |
         The status of a job or a step.
-        NEW: The job/step is being configured, and has not started yet
-        CONTINUE: The job/step is being configured, but has existing artefacts
-        ON_HOLD: The job/step has been started, but is kept on hold
-        QUEUED: The job/step has been started, and is awaiting for resources to execute
-        IN_PROGRESS: The job/step is currently running
-        DONE: The job/step has finished successfully
-        FAILED: The job/step has failed
-        CANCELED: The job/step has been canceled
+        
+        - `NEW`: The job/step is being configured, and has not started yet
+        - `CONTINUE`: The job/step is being configured, but has existing artefacts
+        - `ON_HOLD`: The job/step has been started, but is kept on hold
+        - `QUEUED`: The job/step has been started, and is awaiting for resources to execute
+        - `IN_PROGRESS`: The job/step is currently running
+        - `DONE`: The job/step has finished successfully
+        - `FAILED`: The job/step has failed
+        - `CANCELED`: The job/step has been canceled
       enum:
         - "NEW"
         - "CONTINUE"
@@ -3278,19 +3161,20 @@ components:
     SyntheticDatasetId:
       type: "string"
       format: "uuid"
-      description: "The unique identifier of a synthetic dataset"
+      description: "The unique identifier of a synthetic dataset."
     SyntheticDatasetName:
       type: "string"
-      description: "The name of a synthetic dataset"
+      description: "The name of a synthetic dataset."
     SyntheticDatasetDescription:
       type: "string"
-      description: "The description of a synthetic dataset"
+      description: "The description of a synthetic dataset."
     SyntheticDatasetGenerationTime:
       type: "string"
       description: "The UTC date and time when the generation has finished."
       format: "date-time"
     SyntheticDatasetUsage:
       type: "object"
+      description: "Usage statistics of a synthetic dataset."
       properties:
         totalDatapoints:
           type: "integer"
@@ -3313,6 +3197,7 @@ components:
             description: "Number of likes of this synthetic dataset."
     SyntheticDatasetListItem:
       type: "object"
+      description: "Essential synthetic dataset details for listings."
       properties:
         id:
           $ref: "#/components/schemas/SyntheticDatasetId"
@@ -3335,6 +3220,10 @@ components:
         - "metadata"
     SyntheticDataset:
       type: "object"
+      description: |
+        A synthetic dataset is created based on a trained generator. 
+        
+        It consists of synthetic samples, as well as a quality assurance report.
       properties:
         id:
           $ref: "#/components/schemas/SyntheticDatasetId"
@@ -3388,14 +3277,14 @@ components:
         same size of samples as the original, and the default behavior for Synthetic Datasets is to generate one
         subject only.
       minimum: 1
-    SyntheticTableSamplingTemperature:
+    SamplingTemperature:
       description: "temperature for sampling"
       type: "number"
       format: "double"
       minimum: 0.0
       maximum: 2.0
       default: 1.0
-    SyntheticTableSamplingTopP:
+    SamplingTopP:
       description: "topP for sampling"
       type: "number"
       format: "double"
@@ -3417,52 +3306,6 @@ components:
       type: "string"
       description: |
         The base64-encoded string derived from a Parquet file containing the specified sample seed data.
-    SyntheticTableRebalancing:
-      type: "object"
-      description: |
-        Configure rebalancing of the table.
-        Only applicable for categorical columns of a subject table.
-      properties:
-        column:
-          type: "string"
-          description: |
-            The name of the column to be rebalanced.
-            That column must be of modelEncodingType CATEGORICAL.
-        probabilities:
-          type: "object"
-          description: |
-            The target distribution of samples values.
-            The keys are the categorical values, and the values are the probabilities.
-          example:
-            - US: 0.8
-            - male: 0.5
-              female: 0.5
-          additionalProperties:
-            type: number
-            format: "double"
-    SyntheticTableImputation:
-      type: "array"
-      description: |
-        Specify a list of column names that are to be imputed.
-        Imputed columns will suppress the sampling of NULL values.
-      items:
-        type: "string"
-    SyntheticTableFairness:
-      type: "object"
-      description: |
-        Configure a fairness objective for the table. Only applicable for a subject table.
-        The generated synthetic data will maintain robust statistical parity between the target column and 
-        the specified sensitive columns. All these columns must be categorical.
-      properties:
-        targetColumn:
-          type: "string"
-        sensitiveColumns:
-          type: "array"
-          items:
-            type: "string"
-      required:
-        - targetColumn
-        - sensitiveColumns
     SyntheticTableConfiguration:
       type: "object"
       description: "The sample configuration for a synthetic table"
@@ -3476,15 +3319,15 @@ components:
         sampleSeedData:
           $ref: "#/components/schemas/SyntheticTableSampleSeedData"
         samplingTemperature:
-          $ref: "#/components/schemas/SyntheticTableSamplingTemperature"
+          $ref: "#/components/schemas/SamplingTemperature"
         samplingTopP:
-          $ref: "#/components/schemas/SyntheticTableSamplingTopP"
+          $ref: "#/components/schemas/SamplingTopP"
         rebalancing:
-          $ref: "#/components/schemas/SyntheticTableRebalancing"
+          $ref: "#/components/schemas/RebalancingConfig"
         imputation:
-          $ref: "#/components/schemas/SyntheticTableImputation"
+          $ref: "#/components/schemas/ImputationConfig"
         fairness:
-          $ref: "#/components/schemas/SyntheticTableFairness"
+          $ref: "#/components/schemas/FairnessConfig"
         tabularCompute:
           $ref: "#/components/schemas/ComputeId"
         languageCompute:
@@ -3492,7 +3335,7 @@ components:
     SyntheticTableId:
       type: "string"
       format: "uuid"
-      description: "The unique identifier of a synthetic table"
+      description: "The unique identifier of a synthetic table."
     SyntheticTableName:
       type: "string"
       description: "The name of a synthetic table. This matches the name of a corresponding SourceTable."
@@ -3506,6 +3349,7 @@ components:
         The total number of datapoints for that table in the generated synthetic dataset.
     SyntheticTable:
       type: "object"
+      description: "A synthetic table that will be generated."
       properties:
         id:
           $ref: "#/components/schemas/SyntheticTableId"
@@ -3538,6 +3382,8 @@ components:
           $ref: "#/components/schemas/SyntheticTableTotalDatapoints"
         sourceTableTotalRows:
           $ref: "#/components/schemas/SourceTableTotalRows"
+      required:
+        - name
     # Delivery
     SyntheticDatasetDelivery:
       type: "object"
@@ -3560,6 +3406,7 @@ components:
     # Synthetic Dataset Configs
     SyntheticDatasetConfig:
       type: "object"
+      description: "The configuration for creating a new synthetic dataset."
       properties:
         generatorId:
           $ref: "#/components/schemas/GeneratorId"
@@ -3584,11 +3431,13 @@ components:
           $ref: "#/components/schemas/SyntheticDatasetDelivery"
     SyntheticTablePatchConfig:
       type: "object"
+      description: "The configuration for updating a synthetic table."
       properties:
         configuration:
           $ref: "#/components/schemas/SyntheticTableConfiguration"
     SyntheticProbeConfig:
       type: "object"
+      description: "The configuration for probing for new synthetic samples."
       properties:
         generatorId:
           $ref: "#/components/schemas/GeneratorId"
@@ -3598,11 +3447,14 @@ components:
             $ref: "#/components/schemas/SyntheticTableConfig"
     SyntheticTableConfig:
       type: "object"
+      description: "The configuration for a synthetic table when creating a new synthetic dataset."
       properties:
         name:
           $ref: "#/components/schemas/SyntheticTableName"
         configuration:
           $ref: "#/components/schemas/SyntheticTableConfiguration"
+      required:
+        - "name"
 
     # ASSISTANT
     AssistantSettingsIsEnabled:
@@ -3665,10 +3517,10 @@ components:
     AssistantThreadId:
       type: "string"
       format: "uuid"
-      description: "The unique identifier of a assistant thread"
+      description: "The unique identifier of a assistant thread."
     AssistantThreadName:
       type: "string"
-      description: "The name of a assistant thread"
+      description: "The name of a assistant thread."
     AssistantThreadSessionStatus:
       type: "string"
       enum:
@@ -3677,6 +3529,7 @@ components:
         - "expired"
     AssistantThreadListItem:
       type: "object"
+      description: "Essential assistant thread details for listings."
       properties:
         id:
           $ref: "#/components/schemas/AssistantThreadId"
@@ -3691,6 +3544,7 @@ components:
         - "metadata"
     AssistantThread:
       type: "object"
+      description: "A assistant thread."
       properties:
         id:
           $ref: "#/components/schemas/AssistantThreadId"
@@ -3720,13 +3574,10 @@ components:
             $ref: "#/components/schemas/AssistantMessage"
         usage:
           $ref: "#/components/schemas/AssistantThreadUsage"
-    AssistantTokenUsage:
-      type: "number"
-      format: "int64"
     AssistantMessageId:
       type: "string"
       format: "uuid"
-      description: "The unique identifier of a assistant message"
+      description: "The unique identifier of a assistant message."
     AssistantMessageRole:
       type: "string"
       description: "The role of the author of this message"
@@ -3775,7 +3626,7 @@ components:
         finishReason:
           $ref: "#/components/schemas/AssistantMessageFinishReason"
         tokensConsumed:
-          type: "number"
+          type: "integer"
           format: "int64"
           description: "The number of tokens consumed by the assistant message."
     AssistantMessageDelta:
@@ -3793,7 +3644,7 @@ components:
         finishReason:
           $ref: "#/components/schemas/AssistantMessageFinishReason"
         tokensConsumed:
-          type: "number"
+          type: "integer"
           format: "int64"
           description: "The number of tokens consumed by the model."
     AssistantThreadUsage:
@@ -3803,7 +3654,7 @@ components:
           type: "integer"
           description: "Number of shares of this assistant thread."
         totalTokensConsumed:
-          type: "number"
+          type: "integer"
           format: "int64"
           description: "The total number of tokens consumed by the thread."
     # Assistant Configs
@@ -3839,6 +3690,7 @@ components:
       type: "string"
     ComputeType:
       type: "string"
+      description: "The type of compute."
       enum:
         - "KUBERNETES"
         - "DATABRICKS"
@@ -3847,6 +3699,7 @@ components:
       description: "The index for determining the sort order when listing computes"
     ComputeResources:
       type: "object"
+      description: "A set of available hardware resources for a compute resource."
       properties:
         cpus:
           type: "integer"
@@ -3872,6 +3725,7 @@ components:
       additionalProperties: { }
     ComputeListItem:
       type: "object"
+      description: "Essential compute details for listings."
       properties:
         id:
           $ref: "#/components/schemas/ComputeId"
@@ -3883,6 +3737,7 @@ components:
           $ref: "#/components/schemas/ComputeResources"
     Compute:
       type: "object"
+      description: "A compute resource for executing tasks."
       properties:
         id:
           $ref: "#/components/schemas/ComputeId"
@@ -3901,6 +3756,7 @@ components:
     # Compute Configs
     ComputeConfig:
       type: "object"
+      description: "The configuration for creating a new compute resource."
       properties:
         name:
           $ref: "#/components/schemas/ComputeName"
@@ -3955,6 +3811,336 @@ components:
           type: "number"
           format: "double"
           description: "The number of credits used during the reported period"
+
+    #####################
+    ## mostlyai-engine ##
+    #####################
+
+    ModelType:
+      type: "string"
+      description: |
+        The type of model.
+
+        - `TABULAR`: A generative AI model tailored towards tabular data, trained from scratch.
+        - `LANGUAGE`: A generative AI model build upon a (pre-trained) language model.
+      enum:
+        - "TABULAR"
+        - "LANGUAGE"
+    ModelEncodingType:
+      type: "string"
+      description: |
+        The encoding type used for model training and data generation.
+        
+        - `AUTO`: Model chooses among available encoding types based on the column's data type.
+        - `TABULAR_CATEGORICAL`: Model samples from existing (non-rare) categories.
+        - `TABULAR_NUMERIC_AUTO`: Model chooses among 3 numeric encoding types based on the values.
+        - `TABULAR_NUMERIC_DISCRETE`: Model samples from existing discrete numerical values.
+        - `TABULAR_NUMERIC_BINNED`: Model samples from binned buckets, to then sample randomly within a bucket.
+        - `TABULAR_NUMERIC_DIGIT`: Model samples each digit of a numerical value.
+        - `TABULAR_CHARACTER`: Model samples each character of a string value.
+        - `TABULAR_DATETIME`: Model samples each part of a datetime value.
+        - `TABULAR_DATETIME_RELATIVE`: Model samples the relative difference between datetimes within a sequence.
+        - `TABULAR_LAT_LONG`: Model samples a latitude-longitude column. The format is "latitude,longitude".
+        - `LANGUAGE_TEXT`: Model will train a distinct LANGUAGE model for this column, to then generate free text.
+
+        Encoding types, that are not being prefixed with either `TABULAR` or `LANGUAGE` have been deprecated.
+      enum:
+        - "AUTO"
+        - "TABULAR_CATEGORICAL"
+        - "TABULAR_NUMERIC_AUTO"
+        - "TABULAR_NUMERIC_DISCRETE"
+        - "TABULAR_NUMERIC_BINNED"
+        - "TABULAR_NUMERIC_DIGIT"
+        - "TABULAR_CHARACTER"
+        - "TABULAR_DATETIME"
+        - "TABULAR_DATETIME_RELATIVE"
+        - "TABULAR_LAT_LONG"
+        - "LANGUAGE_TEXT"
+      default: "AUTO"
+    RebalancingConfig:
+      type: "object"
+      description: "Configure rebalancing."
+      properties:
+        column:
+          type: "string"
+          description: |
+            The name of the column to be rebalanced.  Only applicable for a subject table.
+            Only applicable for categorical columns.
+        probabilities:
+          type: "object"
+          description: |
+            The target distribution of samples values.
+            The keys are the categorical values, and the values are the probabilities.
+          example:
+            - US: 0.8
+            - male: 0.5
+              female: 0.5
+          additionalProperties:
+            type: "number"
+            format: "double"
+      required:
+        - "column"
+        - "probabilities"
+    ImputationConfig:
+      type: "object"
+      description: "Configure imputation."
+      properties:
+        columns:
+          description: |
+            The names of the columns to be imputed.
+            Imputed columns will suppress the sampling of NULL values.
+          type: "array"
+          items:
+            type: "string"
+      required:
+        - "columns"
+    FairnessConfig:
+      type: "object"
+      description: |
+        Configure a fairness objective for the table. 
+        Only applicable for a subject table.
+        The generated synthetic data will maintain robust statistical parity between the target column and 
+        the specified sensitive columns. All these columns must be categorical.
+      properties:
+        targetColumn:
+          description: "The name of the target column."
+          type: "string"
+        sensitiveColumns:
+          description: "The names of the sensitive columns."
+          type: "array"
+          items:
+            type: "string"
+      required:
+        - "targetColumn"
+        - "sensitiveColumns"
+    DifferentialPrivacyConfig:
+      type: "object"
+      description: |
+        The optional differential privacy configuration for training the model. 
+        If not provided, then no differential privacy will be applied.
+      properties:
+        maxEpsilon:
+          type: "number"
+          format: "double"
+          description: |
+            Specifies the maximum allowable epsilon value. If the training process exceeds this threshold, it will be terminated early. Only model checkpoints with epsilon values below this limit will be retained. 
+            If not provided, the training will proceed without early termination based on epsilon constraints.
+          minimum: 0.0
+          maximum: 10000.0
+        noiseMultiplier:
+          type: "number"
+          format: "double"
+          description: |
+            The ratio of the standard deviation of the Gaussian noise to the L2-sensitivity of the function to which the noise is added (How much noise to add).
+          default: 1.5
+          minimum: 0.0
+          maximum: 10000.0
+        maxGradNorm:
+          type: "number"
+          format: "double"
+          description: |
+            The maximum norm of the per-sample gradients for training the model with differential privacy.
+          default: 1.0
+          minimum: 0.0
+          maximum: 10000.0
+
+    #################
+    ## mostlyai-qa ##
+    #################
+
+    ModelMetrics:
+      type: "object"
+      description: |
+        Metrics regarding the quality of synthetic data, measured in terms of accuracy, similarity, and distances.
+        
+        1. **Accuracy**: Metrics regarding the accuracy of synthetic data, measured as the closeness of discretized lower
+        dimensional marginal distributions.
+        2. **Similarity**: Metrics regarding the similarity of the full joint distributions of samples within an embedding
+        space.
+        3. **Distances**: Metrics regarding the nearest neighbor distances between training, holdout, and synthetic samples
+        in an embedding space. Useful for assessing the novelty / privacy of synthetic data.
+        
+        The quality of synthetic data is assessed by comparing these metrics to the same metrics of a holdout dataset.
+        The holdout dataset is a subset of the original training data, that was not used for training the synthetic data
+        generator. The metrics of the synthetic data should be as close as possible to the metrics of the holdout data.
+      properties:
+        accuracy:
+          $ref: "#/components/schemas/Accuracy"
+        distances:
+          $ref: "#/components/schemas/Distances"
+        similarity:
+          $ref: "#/components/schemas/Similarity"
+    Accuracy:
+      type: "object"
+      description: |
+        Metrics regarding the accuracy of synthetic data, measured as the closeness of discretized lower dimensional
+        marginal distributions.
+        
+        1. **Univariate Accuracy**: The accuracy of the univariate distributions for all target columns.
+        2. **Bivariate Accuracy**: The accuracy of all pair-wise distributions for target columns, as well as for target
+        columns with respect to the context columns.
+        3. **Coherence Accuracy**: The accuracy of the auto-correlation for all target columns.
+        
+        Accuracy is defined as 100% - [Total Variation Distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures) (TVD),
+        whereas TVD is half the sum of the absolute differences of the relative frequencies of the corresponding
+        distributions.
+        
+        These accuracies are calculated for all discretized univariate, and bivariate distributions. In case of sequential
+        data, also for all coherence distributions. Overall metrics are then calculated as the average across these
+        accuracies.
+        
+        All metrics can be compared against a theoretical maximum accuracy, which is calculated for a same-sized holdout.
+        The accuracy metrics shall be as close as possible to the theoretical maximum, but not significantly higher, as
+        this would indicate overfitting.
+      properties:
+        overall:
+          description: |
+            Overall accuracy of synthetic data, averaged across univariate, bivariate, and coherence.
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        univariate:
+          description: |
+            Average accuracy of discretized univariate distributions.
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        bivariate:
+          description: |
+            Average accuracy of discretized bivariate distributions.
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        coherence:
+          description: |
+            Average accuracy of discretized coherence distributions. Only applicable for sequential data.
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        overallMax:
+          description: |
+            Expected overall accuracy of a same-sized holdout. Serves as a reference for `overall`.
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        univariateMax:
+          description: |
+            Expected univariate accuracy of a same-sized holdout. Serves as a reference for `univariate`.
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        bivariateMax:
+          description: |
+            Expected bivariate accuracy of a same-sized holdout. Serves as a reference for `bivariate`.
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        coherenceMax:
+          description: |
+            Expected coherence accuracy of a same-sized holdout. Serves as a reference for `coherence`.
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+    Similarity:
+      type: "object"
+      description: |
+        Metrics regarding the similarity of the full joint distributions of samples within an embedding space.
+        
+        1. **Cosine Similarity**: The cosine similarity between the centroids of synthetic and training samples.
+        2. **Discriminator AUC**: The AUC of a discriminative model to distinguish between synthetic and training samples.
+        
+        The SentenceTransformer model [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) is
+        used to compute the embeddings of a string-ified representation of individual records. In case of sequential data
+        the records, that belong to the same group, are being concatenated. We then calculate the cosine similarity
+        between the centroids of the provided datasets within the embedding space.
+        
+        Again, we expect the similarity metrics to be as close as possible to 1, but not significantly higher than what is
+        measured for the holdout data, as this would again indicate overfitting.
+        
+        In addition, a discriminative ML model is trained to distinguish between training and synthetic samples. The
+        ability of this model to distinguish between training and synthetic samples is measured by the AUC score. For
+        synthetic data to be considered realistic, the AUC score should be close to 0.5, which indicates that the synthetic
+        data is indistinguishable from the training data.
+      properties:
+        cosineSimilarityTrainingSynthetic:
+          description: "Cosine similarity between training and synthetic centroids."
+          type: "number"
+          format: "double"
+          minimum: -1.0
+          maximum: 1.0
+        cosineSimilarityTrainingHoldout:
+          description: "Cosine similarity between training and holdout centroids. Serves as a reference for `cosine_similarity_training_synthetic`."
+          type: "number"
+          format: "double"
+          minimum: -1.0
+          maximum: 1.0
+        discriminatorAUCTrainingSynthetic:
+          description: "Cross-validated AUC of a discriminative model to distinguish between training and synthetic samples."
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        discriminatorAUCTrainingHoldout:
+          description: "Cross-validated AUC of a discriminative model to distinguish between training and holdout samples. Serves as a reference for `discriminator_auc_training_synthetic`."
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+    Distances:
+      type: "object"
+      description: |
+        Metrics regarding the nearest neighbor distances between training, holdout, and synthetic samples in an embedding
+        space. Useful for assessing the novelty / privacy of synthetic data.
+        
+        The provided data is first down-sampled, so that the number of samples match across all datasets. Note, that for
+        an optimal sensitivity of this privacy assessment it is recommended to use a 50/50 split between training and
+        holdout data, and then generate synthetic data of the same size.
+        
+        The embeddings of these samples are then computed, and the L2 nearest neighbor distances are calculated for each
+        synthetic sample to the training and holdout samples. Based on these nearest neighbor distances the following
+        metrics are calculated:
+          - Identical Match Share (IMS): The share of synthetic samples that are identical to a training or holdout sample.
+          - Distance to Closest Record (DCR): The average distance of synthetic to training or holdout samples.
+        
+        For privacy-safe synthetic data we expect to see about as many identical matches, and about the same distances
+        for synthetic samples to training, as we see for synthetic samples to holdout.
+      properties:
+        imsTraining:
+          description: "Share of synthetic samples that are identical to a training sample."
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        imsHoldout:
+          description: "Share of synthetic samples that are identical to a holdout sample. Serves as a reference for `ims_training`."
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        dcrTraining:
+          description: "Average L2 nearest-neighbor distance between synthetic and training samples."
+          type: "number"
+          format: "double"
+          minimum: 0.0
+        dcrHoldout:
+          description: "Average L2 nearest-neighbor distance between synthetic and holdout samples. Serves as a reference for `dcr_training`."
+          type: "number"
+          format: "double"
+          minimum: 0.0
+        dcrShare:
+          description: "Share of synthetic samples that are closer to a training sample than to a holdout sample. This should not be significantly larger than 50%."
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
 
 security:
   - ApiKeyAuth: [ ]
