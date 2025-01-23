@@ -1,7 +1,7 @@
 openapi: "3.0.0"
 
 info:
-  version: "0.1.1"
+  version: "1.0.0"
   title: "MOSTLY AI"
   description: |
     API access to your MOSTLY AI platform.
@@ -39,12 +39,12 @@ tags:
     description: "The generation of a synthetic dataset"
   - name: "Assistant"
     description: "An AI-powered Assistant with a Python compute environment"
-  - name: "Shares"
-    description: "Share resources with other users"
   - name: "Users"
     description: "User management"
   - name: "Likes"
     description: "Like, unlike or count likes on resources"
+  - name: "Organizations"
+    description: "Organization management"
 
 paths:
 
@@ -62,6 +62,7 @@ paths:
         - $ref: "#/components/parameters/pageLimit"
         - $ref: "#/components/parameters/filterBySearchTerm"
         - $ref: "#/components/parameters/filterByConnectorAccessType"
+        - $ref: "#/components/parameters/filterByOwnerId"
       responses:
         "200":
           description: "OK"
@@ -85,7 +86,7 @@ paths:
       operationId: "createConnector"
       tags: [ "Connectors" ]
       parameters:
-      - $ref: "#/components/parameters/testConnection"
+        - $ref: "#/components/parameters/testConnection"
       requestBody:
         required: true
         content:
@@ -239,65 +240,37 @@ paths:
                       type: "string"
                     defaultModelEncodingType:
                       $ref: "#/components/schemas/ModelEncodingType"
-  /connectors/{id}/share:
-    parameters:
-      - $ref: "#/components/parameters/connectorIdPath"
-    get:
-      summary: "List shared users"
-      description: "List all users that the connector is shared with."
-      operationId: "listConnectorShares"
-      tags: [ "Shares" ]
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceShares"
-    post:
-      summary: "Share connector"
-      description: "Share the provided connector with the provided user."
-      operationId: "shareConnector"
-      tags: [ "Shares" ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ShareConfig"
-      responses:
-        "200":
-          description: "OK"
-    delete:
-      summary: "Revoke connector share"
-      description: "Revoke a connector share with the provided user."
-      operationId: "deleteConnectorShare"
-      tags: [ "Shares" ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ShareDeleteConfig"
-      responses:
-        "200":
-          description: "OK"
-  /connectors/{id}/share/public:
+  /connectors/{id}/transfer:
     parameters:
       - $ref: "#/components/parameters/connectorIdPath"
     put:
-      summary: "Share connector publicly"
-      description: "Share the provided connector publicly."
-      operationId: "createConnectorPublicShare"
-      tags: [ "Shares" ]
+      summary: |
+        Transfer ownership of the resource either to an organization where the current user has at least CONTRIBUTOR permissions, or to the current user themselves.
+        Requires the current user to have resource permission level `ADMIN`.
+      operationId: "transferOwnershipConnector"
+      tags: [ "Connectors" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferOwnershipConfig"
       responses:
         "200":
           description: "OK"
-    delete:
-      summary: "Revoke connector public share"
-      description: "Revoke a connector public share."
-      operationId: "deleteConnectorPublicShare"
-      tags: [ "Shares" ]
+  /connectors/{id}/visibility:
+    parameters:
+      - $ref: "#/components/parameters/connectorIdPath"
+    put:
+      summary: "Set connector visibility. Requires the current user to have resource permission level `ADMIN`."
+      operationId: "setConnectorVisibility"
+      tags: [ "Connectors" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetVisibilityConfig"
       responses:
         "200":
           description: "OK"
@@ -314,6 +287,7 @@ paths:
         - $ref: "#/components/parameters/pageLimit"
         - $ref: "#/components/parameters/filterByProgressStatus"
         - $ref: "#/components/parameters/filterBySearchTerm"
+        - $ref: "#/components/parameters/filterByOwnerId"
       responses:
         "200":
           description: "OK"
@@ -363,7 +337,7 @@ paths:
                 $ref: "#/components/schemas/Generator"
     patch:
       summary: "Update generator"
-      operationId: "updateGenerator"
+      operationId: "patchGenerator"
       tags: [ "Generators" ]
       requestBody:
         required: true
@@ -406,68 +380,6 @@ paths:
       responses:
         "200":
           description: "OK"
-  /generators/{id}/share:
-    parameters:
-      - $ref: "#/components/parameters/generatorIdPath"
-    get:
-      summary: "List shared users"
-      description: "List all users that the generator is shared with."
-      operationId: "listGeneratorShares"
-      tags: [ "Shares" ]
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceShares"
-    post:
-      summary: "Share generator"
-      description: "Share the provided generator with the provided user."
-      operationId: "shareGenerator"
-      tags: [ "Shares" ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ShareConfig"
-      responses:
-        "200":
-          description: "OK"
-    delete:
-      summary: "Revoke generator share"
-      description: "Revoke a generator share with the provided user."
-      operationId: "deleteGeneratorShare"
-      tags: [ "Shares" ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ShareDeleteConfig"
-      responses:
-        "200":
-          description: "OK"
-  /generators/{id}/share/public:
-    parameters:
-      - $ref: "#/components/parameters/generatorIdPath"
-    put:
-      summary: "Share generator publicly"
-      description: "Share the provided generator publicly."
-      operationId: "createGeneratorPublicShare"
-      tags: [ "Shares" ]
-      responses:
-        "200":
-          description: "OK"
-    delete:
-      summary: "Revoke generator public share"
-      description: "Revoke a generator public share."
-      operationId: "deleteGeneratorPublicShare"
-      tags: [ "Shares" ]
-      responses:
-        "200":
-          description: "OK"
   /generators/{id}/config:
     parameters:
       - $ref: "#/components/parameters/generatorIdPath"
@@ -487,7 +399,7 @@ paths:
       - $ref: "#/components/parameters/generatorIdPath"
     post:
       summary: "Clone generator"
-      description: | 
+      description: |
         Create a new generator, re-using existing data and model configurations. By setting trainingStatus 
         to CONTINUE, the model weights are copied as well, and training will continue from there. Note, that
         in that case, only the training parameters (maxSampleSize, maxEpochs, batchSize, compute, etc.) of 
@@ -532,7 +444,7 @@ paths:
     post:
       summary: "Import generator from a file"
       description: |
-        Import a generator from a self-contained single file, that was previously exported from a MOSTLY AI server.
+        Import a generator from a self-contained single file, that was previously exported from a MOSTLY AI server. Generators will be imported as private.
       operationId: "importGeneratorFromFile"
       tags: [ "Generators" ]
       requestBody:
@@ -590,7 +502,7 @@ paths:
                   $ref: "#/components/schemas/SourceTableName"
                 primaryKey:
                   $ref: "#/components/schemas/SourceTablePrimaryKey"
-                modelConfiguration:
+                tabularModelConfiguration:
                   $ref: "#/components/schemas/ModelConfiguration"
                 languageModelConfiguration:
                   $ref: "#/components/schemas/ModelConfiguration"
@@ -822,6 +734,40 @@ paths:
               schema:
                 type: "string"
                 format: "binary"
+  /generators/{id}/transfer:
+    parameters:
+      - $ref: "#/components/parameters/generatorIdPath"
+    put:
+      summary: |
+        Transfer ownership of the resource either to an organization where the current user has at least CONTRIBUTOR permissions, or to the current user themselves.
+        Requires the current user to have resource permission level `ADMIN`.
+      operationId: "transferOwnershipGenerator"
+      tags: [ "Generators" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferOwnershipConfig"
+      responses:
+        "200":
+          description: "OK"
+  /generators/{id}/visibility:
+    parameters:
+      - $ref: "#/components/parameters/generatorIdPath"
+    put:
+      summary: "Set generator visibility. Requires the current user to have resource permission level `ADMIN`."
+      operationId: "setGeneratorVisibility"
+      tags: [ "Generators" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetVisibilityConfig"
+      responses:
+        "200":
+          description: "OK"
 
   # SYNTHETIC DATASETS
   /synthetic-datasets:
@@ -834,6 +780,7 @@ paths:
         - $ref: "#/components/parameters/pageLimit"
         - $ref: "#/components/parameters/filterByProgressStatus"
         - $ref: "#/components/parameters/filterBySearchTerm"
+        - $ref: "#/components/parameters/filterByOwnerId"
       responses:
         "200":
           description: "OK"
@@ -921,68 +868,6 @@ paths:
       responses:
         "200":
           description: "OK"
-  /synthetic-datasets/{id}/share:
-    parameters:
-      - $ref: "#/components/parameters/syntheticDatasetIdPath"
-    get:
-      summary: "List shared users"
-      description: "List all users that the synthetic dataset is shared with."
-      operationId: "listSyntheticDatasetShares"
-      tags: [ "Shares" ]
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceShares"
-    post:
-      summary: "Share synthetic dataset"
-      description: "Share the provided synthetic dataset with the provided user."
-      operationId: "shareSyntheticDataset"
-      tags: [ "Shares" ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ShareConfig"
-      responses:
-        "200":
-          description: "OK"
-    delete:
-      summary: "Revoke synthetic dataset share"
-      description: "Revoke a synthetic dataset share with the provided user."
-      operationId: "deleteSyntheticDatasetShare"
-      tags: [ "Shares" ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ShareDeleteConfig"
-      responses:
-        "200":
-          description: "OK"
-  /synthetic-datasets/{id}/share/public:
-    parameters:
-      - $ref: "#/components/parameters/syntheticDatasetIdPath"
-    put:
-      summary: "Share synthetic dataset publicly"
-      description: "Share the provided synthetic dataset publicly."
-      operationId: "createSyntheticDatasetPublicShare"
-      tags: [ "Shares" ]
-      responses:
-        "200":
-          description: "OK"
-    delete:
-      summary: "Revoke synthetic dataset public share"
-      description: "Revoke a synthetic dataset public share."
-      operationId: "deleteSyntheticDatasetPublicShare"
-      tags: [ "Shares" ]
-      responses:
-        "200":
-          description: "OK"
   /synthetic-datasets/{id}/config:
     parameters:
       - $ref: "#/components/parameters/syntheticDatasetIdPath"
@@ -1047,7 +932,7 @@ paths:
                   type: "string"
                   format: "binary"
               required:
-                - file
+                - "file"
       responses:
         "200":
           description: "OK"
@@ -1160,6 +1045,41 @@ paths:
               schema:
                 type: "string"
                 format: "binary"
+  /synthetic-datasets/{id}/transfer:
+    parameters:
+      - $ref: "#/components/parameters/syntheticDatasetIdPath"
+    put:
+      summary: |
+        Transfer ownership of the resource either to an organization where the current user has at least CONTRIBUTOR permissions, or to the current user themselves.
+        Requires the current user to have resource permission level `ADMIN`.
+      operationId: "transferOwnershipSyntheticDataset"
+      tags: [ "Synthetic Datasets" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferOwnershipConfig"
+      responses:
+        "200":
+          description: "OK"
+  /synthetic-datasets/{id}/visibility:
+    parameters:
+      - $ref: "#/components/parameters/syntheticDatasetIdPath"
+    put:
+      summary: "Set synthetic dataset visibility. Requires the current user to have resource permission level `ADMIN`."
+      operationId: "setSyntheticDatasetVisibility"
+      tags: [ "Synthetic Datasets" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetVisibilityConfig"
+      responses:
+        "200":
+          description: "OK"
+
   /synthetic-probes:
     post:
       summary: "Create synthetic probe"
@@ -1221,6 +1141,7 @@ paths:
         - $ref: "#/components/parameters/pageOffset"
         - $ref: "#/components/parameters/pageLimit"
         - $ref: "#/components/parameters/filterBySearchTerm"
+        - $ref: "#/components/parameters/filterByOwnerId"
       responses:
         "200":
           description: "OK"
@@ -1432,68 +1353,6 @@ paths:
       responses:
         "200":
           description: "OK"
-  /assistant/threads/{id}/share:
-    parameters:
-      - $ref: "#/components/parameters/assistantThreadIdPath"
-    get:
-      summary: "List shared users"
-      description: "List all users that the assistant thread is shared with."
-      operationId: "listAssistantThreadShares"
-      tags: [ "Shares" ]
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceShares"
-    post:
-      summary: "Share assistant thread"
-      description: "Share the provided assistant thread with the provided user."
-      operationId: "shareAssistantThread"
-      tags: [ "Shares" ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ShareConfig"
-      responses:
-        "200":
-          description: "OK"
-    delete:
-      summary: "Revoke assistant thread share"
-      description: "Revoke an assistant thread share with the provided user."
-      operationId: "deleteAssistantThreadShare"
-      tags: [ "Shares" ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ShareDeleteConfig"
-      responses:
-        "200":
-          description: "OK"
-  /assistant/threads/{id}/share/public:
-    parameters:
-      - $ref: "#/components/parameters/assistantThreadIdPath"
-    put:
-      summary: "Share assistant thread publicly"
-      description: "Share the provided assistant thread publicly."
-      operationId: "createAssistantThreadPublicShare"
-      tags: [ "Shares" ]
-      responses:
-        "200":
-          description: "OK"
-    delete:
-      summary: "Revoke assistant thread public share"
-      description: "Revoke an assistant thread public share."
-      operationId: "deleteAssistantThreadPublicShare"
-      tags: [ "Shares" ]
-      responses:
-        "200":
-          description: "OK"
 
   # USERS
   /users/me/key:
@@ -1543,7 +1402,7 @@ paths:
             schema:
               $ref: "#/components/schemas/UserSettingsUpdateConfig"
       responses:
-        "204":
+        "200":
           description: "OK"
 
   /users/me/notifications:
@@ -1763,6 +1622,182 @@ paths:
         "200":
           description: "OK"
 
+  # ORGANIZATIONS
+  /organizations:
+    get:
+      summary: "List organizations"
+      description: "Retrieve a list of all organizations. Any user can access this endpoint to get a list of organizations."
+      operationId: "listOrganizations"
+      tags: [ "Organizations" ]
+      parameters:
+        - $ref: "#/components/parameters/pageOffset"
+        - $ref: "#/components/parameters/pageLimit"
+        - $ref: "#/components/parameters/filterBySearchTerm"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                properties:
+                  totalCount:
+                    $ref: "#/components/schemas/PaginatedTotalCount"
+                  results:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/OrganizationListItem"
+    post:
+      summary: "Create organization"
+      description: "Create a new organization. Any user can create an organization."
+      operationId: "createOrganization"
+      tags: [ "Organizations" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationConfig"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+  /organizations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/organizationIdPath"
+    get:
+      summary: "Retrieve organization"
+      description: "Retrieve details of a specific organization. Accessible by all users. Public resources will be accessible to all users, while private resources will only be accessible to members of the organization."
+      operationId: "getOrganization"
+      tags: [ "Organizations" ]
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+    patch:
+      summary: "Update organization"
+      description: "Update details of a specific organization. Only accessible by Organization Admins."
+      operationId: "updateOrganization"
+      tags: [ "Organizations" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationPatchConfig"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+    delete:
+      summary: "Delete organization"
+      description: "Delete a specific organization. Only accessible by Organization Admins."
+      operationId: "deleteOrganization"
+      tags: [ "Organizations" ]
+      responses:
+        "200":
+          description: "OK"
+
+  /organizations/{id}/members:
+    parameters:
+      - $ref: "#/components/parameters/organizationIdPath"
+    get:
+      summary: "List organization members"
+      description: "Retrieve a list of all members of a specific organization. Accessible only by organization members."
+      operationId: "listOrganizationMembers"
+      tags: [ "Organizations" ]
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/OrganizationMember"
+
+  /organizations/{id}/members/{userId}:
+    delete:
+      summary: "Remove user from organization. Organization Admins can remove any user, while members can only remove themselves."
+      operationId: "removeUserFromOrganization"
+      tags: [ "Organizations" ]
+      parameters:
+        - $ref: "#/components/parameters/organizationIdPath"
+        - $ref: "#/components/parameters/userIdPath"
+      responses:
+        "200":
+          description: "OK"
+
+  /organizations/{id}/members/{userId}/role:
+    patch:
+      summary: "Update user role"
+      description: "Update the role of a user in the organization. Only accessible by Organization Admins."
+      operationId: "updateMemberRole"
+      tags: [ "Organizations" ]
+      parameters:
+        - $ref: "#/components/parameters/organizationIdPath"
+        - $ref: "#/components/parameters/userIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberRolePatchConfig"
+      responses:
+        200:
+          description: "OK"
+
+  /organizations/{id}/invite:
+    get:
+      summary: "Retrieve organization invite"
+      description: "Retrieve an organization invite for users to join the organization."
+      operationId: "retrieveOrganizationInvite"
+      tags: [ "Organizations" ]
+      parameters:
+        - $ref: "#/components/parameters/organizationIdPath"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationInvite"
+    post:
+      summary: "Generate invite link"
+      description: "Generates new invite link to join the organization. Same link can be used by multiple users. Expires in 72 hours. Only accessible by Organization Admins."
+      operationId: "generateInviteLink"
+      tags: [ "Organizations" ]
+      parameters:
+        - $ref: "#/components/parameters/organizationIdPath"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationInvite"
+
+  /organizations/{id}/join:
+    post:
+      summary: "Accept invite"
+      description: "Accept the invite to join the organization. Accessible by any user that has the invite-link."
+      operationId: "acceptInvite"
+      tags: [ "Organizations" ]
+      parameters:
+        - $ref: "#/components/parameters/organizationIdPath"
+        - $ref: "#/components/parameters/inviteToken"
+      responses:
+        "200":
+          description: "OK"
+
   /mostly-websocket:
     get:
       summary: WebSocket Connection
@@ -1825,24 +1860,6 @@ components:
         default: 50
         minimum: 1
         maximum: 1000
-    resourceIdPath:
-      name: "resourceId"
-      description: "The unique identifier of a resource, i.e. of a connector, generator, synthetic dataset or a assistant thread."
-      in: "path"
-      required: true
-      schema:
-        type: "string"
-    resourceTypePath:
-      name: "resourceType"
-      description: "The type of a resource, i.e. of a connector, generator, synthetic dataset or a assistant thread."
-      in: "path"
-      required: true
-      schema:
-        enum:
-          - "connectors"
-          - "generators"
-          - "synthetic-datasets"
-          - "assistant-threads"
     connectorIdPath:
       name: "id"
       description: "The unique identifier of a connector."
@@ -1885,6 +1902,14 @@ components:
       explode: false
       schema:
         type: "string"
+    filterByOwnerId:
+      name: "ownerId"
+      description: "Filter by owner ID (either user or organization)"
+      in: "query"
+      style: "form"
+      explode: false
+      schema:
+        $ref: "#/components/schemas/AccountId"
     reportType:
       name: "reportType"
       description: "Synthetic dataset report type"
@@ -1971,6 +1996,27 @@ components:
       required: true
       schema:
         type: "string"
+    userIdPath:
+      name: "userId"
+      in: "path"
+      required: true
+      description: "The ID of the user"
+      schema:
+        type: "string"
+    organizationIdPath:
+      name: "id"
+      description: "The unique identifier of an organization"
+      in: "path"
+      required: true
+      schema:
+        $ref: "#/components/schemas/OrganizationId"
+    inviteToken:
+      name: "token"
+      in: "query"
+      required: true
+      schema:
+        type: "string"
+        description: "The token for the invite"
     testConnection:
       name: "testConnection"
       description: |
@@ -1982,29 +2028,6 @@ components:
         default: true
 
   schemas:
-
-    # Generic components
-    BaseResource:
-      type: "object"
-      description: "A set of common properties across resources."
-      properties:
-        id:
-          type: "string"
-          format: "uuid"
-          description: "The unique identifier of the entity."
-        name:
-          type: "string"
-          description: "The name of the entity."
-        uri:
-          $ref: "#/components/schemas/BaseResourceUri"
-        currentUserPermissionLevel:
-          $ref: "#/components/schemas/PermissionLevel"
-        currentUserLikeStatus:
-          $ref: "#/components/schemas/UserLikeStatus"
-    BaseResourceUri:
-      type: "string"
-      description: "The API service endpoint of the entity"
-      example: "/generators/94c77249-42bf-443a-8e17-6e18a19d60b8"
 
     # SYSTEM
     AboutService:
@@ -2019,41 +2042,6 @@ components:
           type: "boolean"
           description: "A flag indicating if the assistant is enabled."
 
-    # SHARES
-    Share:
-      type: "object"
-      allOf:
-        - $ref: "#/components/schemas/User"
-      properties:
-        permissionLevel:
-          $ref: "#/components/schemas/PermissionLevel"
-    ResourceShares:
-      type: "object"
-      properties:
-        isPublic:
-          type: "boolean"
-        shares:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/Share"
-    ShareConfig:
-      type: "object"
-      properties:
-        userEmail:
-          $ref: "#/components/schemas/UserEmail"
-        permissionLevel:
-          $ref: "#/components/schemas/PermissionLevel"
-      required:
-        - "userEmail"
-        - "permissionLevel"
-    ShareDeleteConfig:
-      type: "object"
-      properties:
-        userEmail:
-          $ref: "#/components/schemas/UserEmail"
-      required:
-        - "userEmail"
-
     # USERS
     User:
       type: "object"
@@ -2061,16 +2049,33 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/UserId"
+        name:
+          $ref: "#/components/schemas/UserName"
         firstName:
           $ref: "#/components/schemas/UserFirstName"
         lastName:
           $ref: "#/components/schemas/UserLastName"
         email:
           $ref: "#/components/schemas/UserEmail"
+        avatar:
+          $ref: "#/components/schemas/UserAvatar"
+    UserListItem:
+      type: "object"
+      description: "Essential information about a user for public listings."
+      properties:
+        id:
+          $ref: "#/components/schemas/UserId"
+        name:
+          $ref: "#/components/schemas/UserName"
+        avatar:
+          $ref: "#/components/schemas/UserAvatar"
     UserId:
       type: "string"
       format: "uuid"
       description: "The unique identifier of a user."
+    UserName:
+      type: "string"
+      description: "The name of a user. As of now, it is the concatenation of the first name and last name."
     UserFirstName:
       type: "string"
       description: "First name of a user"
@@ -2082,6 +2087,13 @@ components:
     UserEmail:
       type: "string"
       description: "The email of a user"
+    UserAvatar:
+      type: "string"
+      format: "uri"
+      description: "The URL of the user's avatar"
+    UserAvatarBase64:
+      type: "string"
+      description: "The base64-encoded image of the user's avatar"
     UserUnreadNotifications:
       type: "integer"
       description: "Number of unread notifications for the user"
@@ -2093,12 +2105,11 @@ components:
         - `VIEW`: The user can view and use the resource
         - `ADMIN`: The user can edit, delete and transfer ownership of the resource
       enum:
-        - "VIEW"
-        - "EDIT"
-        - "ADMIN"
+      - "VIEW"
+      - "ADMIN"
     UserLikeStatus:
-        type: "boolean"
-        description: A boolean indicating whether the user has liked the entity or not
+      type: "boolean"
+      description: A boolean indicating whether the user has liked the entity or not
     CurrentUser:
       type: "object"
       description: "Information on the current user."
@@ -2111,12 +2122,19 @@ components:
           $ref: "#/components/schemas/UserLastName"
         email:
           $ref: "#/components/schemas/UserEmail"
+        avatar:
+          $ref: "#/components/schemas/UserAvatar"
         settings:
           $ref: "#/components/schemas/UserSettings"
         usage:
           $ref: "#/components/schemas/UserUsage"
         unreadNotifications:
           $ref: "#/components/schemas/UserUnreadNotifications"
+        organizations:
+          type: "array"
+          description: "The organizations the user belongs to"
+          items:
+            $ref: "#/components/schemas/OrganizationListItem"
     UserSettings:
       type: "object"
       description: "Additional optional user settings."
@@ -2136,6 +2154,8 @@ components:
           $ref: "#/components/schemas/UserFirstName"
         lastName:
           $ref: "#/components/schemas/UserLastName"
+        avatar:
+          $ref: "#/components/schemas/UserAvatarBase64"
     UserSettingsAssistantUpdateConfig:
       type: "object"
       properties:
@@ -2185,6 +2205,17 @@ components:
             limit:
               description: "The maximum number of running generation jobs at any time. If empty, then there is no limit."
               type: "integer"
+    TransferOwnershipConfig:
+      type: "object"
+      description: "The configuration for transferring ownership of a resource to an account."
+      properties:
+        accountId:
+          $ref: "#/components/schemas/AccountId"
+    SetVisibilityConfig:
+      type: "object"
+      properties:
+        visibility:
+          $ref: "#/components/schemas/Visibility"
     Notification:
       type: "object"
       description: "A notification for a user."
@@ -2205,13 +2236,17 @@ components:
           format: "date-time"
           description: "The UTC date and time when the notification has been created."
         resourceUri:
-          $ref: "#/components/schemas/BaseResourceUri"
+          $ref: "#/components/schemas/NotificationResourceUri"
       required:
         - "id"
         - "type"
         - "message"
         - "status"
         - "createdAt"
+    NotificationResourceUri:
+      type: "string"
+      description: "The service URI of the entity"
+      example: "/generators/94c77249-42bf-443a-8e17-6e18a19d60b8"
     NotificationStatus:
       type: "string"
       description: "The status of the notification."
@@ -2223,26 +2258,33 @@ components:
       description: "The type of the notification"
       enum:
         - "RESOURCE_READY"
-        - "RESOURCE_SHARED"
         - "RESOURCE_LIKED"
         - "RESOURCE_FAILED"
+        - "MEMBER_JOINED"
     Metadata:
       type: "object"
       description: "The metadata of a resource."
       readOnly: true
       properties:
+        creatorId:
+          $ref: "#/components/schemas/UserId"
+        creatorName:
+          $ref: "#/components/schemas/UserName"
         createdAt:
           type: "string"
-          description: |
-            The UTC date and time when the resource has been created.
+          description: "The UTC date and time when the resource has been created."
           format: "date-time"
           example: "2023‐09‐07T18:40:39Z"
         ownerId:
-          type: "string"
-          description: "The unique identifier of the owner of the entity."
+          $ref: "#/components/schemas/AccountId"
         ownerName:
-          type: "string"
-          description: "The name of the owner of the entity."
+          $ref: "#/components/schemas/AccountName"
+        ownerType:
+          $ref: "#/components/schemas/AccountType"
+        ownerImage:
+          $ref: "#/components/schemas/AccountImage"
+        visibility:
+          $ref: "#/components/schemas/Visibility"
         currentUserPermissionLevel:
           $ref: "#/components/schemas/PermissionLevel"
         currentUserLikeStatus:
@@ -2330,9 +2372,6 @@ components:
       type: "object"
       description: "Usage statistics of a connector."
       properties:
-        noOfShares:
-          type: "integer"
-          description: "Number of shares of this connector."
         noOfGenerators:
           type: "integer"
           description: "Number of generators using this connector."
@@ -2354,10 +2393,7 @@ components:
           $ref: "#/components/schemas/ConnectorUsage"
       required:
         - "id"
-        - "name"
         - "type"
-        - "accessType"
-        - "metadata"
     Connector:
       type: "object"
       description: |
@@ -2390,9 +2426,7 @@ components:
           default: null
       required:
         - "id"
-        - "name"
         - "type"
-        - "accessType"
     ConnectorConfig:
       type: "object"
       description: |
@@ -2582,9 +2616,6 @@ components:
         noOfSyntheticDatasets:
           type: "integer"
           description: "Number of synthetic datasets generated by this generator."
-        noOfShares:
-          type: "integer"
-          description: "Number of shares of this generator."
         noOfLikes:
           type: "integer"
           description: "Number of likes of this generator."
@@ -2609,7 +2640,6 @@ components:
       required:
         - "id"
         - "trainingStatus"
-        - "metadata"
     Generator:
       type: "object"
       description: |
@@ -2641,7 +2671,6 @@ components:
       required:
         - "id"
         - "trainingStatus"
-        - "metadata"
     # Source Table
     SourceTableId:
       type: "string"
@@ -2650,6 +2679,7 @@ components:
     SourceTableName:
       type: "string"
       description: "The name of a source table. It must be unique within a generator."
+      minLength: 1
     SourceTablePrimaryKey:
       type: "string"
       description: "The column name of the primary key."
@@ -2678,8 +2708,8 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/SourceTableId"
-        sourceConnector:
-          $ref: "#/components/schemas/BaseResource"
+        sourceConnectorId:
+          $ref: "#/components/schemas/ConnectorId"
         location:
           $ref: "#/components/schemas/SourceTableLocation"
         name:
@@ -2696,11 +2726,11 @@ components:
           description: "The foreign keys of a table."
           items:
             $ref: "#/components/schemas/SourceForeignKey"
-        modelMetrics:
+        tabularModelMetrics:
           $ref: "#/components/schemas/ModelMetrics"
         languageModelMetrics:
           $ref: "#/components/schemas/ModelMetrics"
-        modelConfiguration:
+        tabularModelConfiguration:
           $ref: "#/components/schemas/ModelConfiguration"
         languageModelConfiguration:
           $ref: "#/components/schemas/ModelConfiguration"
@@ -2709,8 +2739,6 @@ components:
       required:
         - "id"
         - "name"
-        - "columns"
-        - "model"
     # Source Column
     SourceColumnId:
       type: "string"
@@ -2719,7 +2747,8 @@ components:
       description: "The unique identifier of a source column."
     SourceColumnName:
       type: "string"
-      description: "The name of a source column."
+      description: "The name of a source column. It must be unique within a source table."
+      minLength: 1
     SourceColumnIncluded:
       type: "boolean"
       default: true
@@ -2780,7 +2809,6 @@ components:
       required:
         - "id"
         - "name"
-        - "included"
         - "modelEncodingType"
     # Source ForeignKey
     SourceForeignKeyId:
@@ -2791,9 +2819,11 @@ components:
     ForeignKeyColumn:
       type: "string"
       description: "The column name of a foreign key."
+      minLength: 1
     ForeignKeyReferencedTable:
       type: "string"
       description: "The table name of the referenced table. That table must have a primary key already defined."
+      minLength: 1
     ForeignKeyIsContext:
       type: "boolean"
       description: |
@@ -2812,7 +2842,7 @@ components:
           $ref: "#/components/schemas/ForeignKeyIsContext"
       required:
         - "id"
-        - "foreignKey"
+        - "column"
         - "referencedTable"
         - "isContext"
     # Generator Configs
@@ -2836,9 +2866,9 @@ components:
         trainingStatus:
           $ref: "#/components/schemas/GeneratorCloneTrainingStatus"
     GeneratorCloneTrainingStatus:
-      description: | 
+      description: |
         The training status of the new generator. The available options are:
-          
+        
         - `NEW`: The new generator will re-use existing data and model configurations.
         - `CONTINUE`: The new generator will re-use existing data and model configurations, as well as model weights.
       enum:
@@ -2873,7 +2903,7 @@ components:
           $ref: "#/components/schemas/SourceTableLocation"
         data:
           $ref: "#/components/schemas/SourceTableData"
-        modelConfiguration:
+        tabularModelConfiguration:
           $ref: "#/components/schemas/ModelConfiguration"
         languageModelConfiguration:
           $ref: "#/components/schemas/ModelConfiguration"
@@ -2899,7 +2929,7 @@ components:
           $ref: "#/components/schemas/SourceTableName"
         primaryKey:
           $ref: "#/components/schemas/SourceTablePrimaryKey"
-        modelConfiguration:
+        tabularModelConfiguration:
           $ref: "#/components/schemas/ModelConfiguration"
         languageModelConfiguration:
           $ref: "#/components/schemas/ModelConfiguration"
@@ -2915,6 +2945,7 @@ components:
       required:
         - "column"
         - "referencedTable"
+        - "isContext"
     SourceForeignKeyPatchConfig:
       type: "object"
       properties:
@@ -2950,7 +2981,7 @@ components:
           $ref: "#/components/schemas/SourceTableName"
         includeChildren:
           $ref: "#/components/schemas/SourceTableIncludeChildren"
-        modelConfiguration:
+        tabularModelConfiguration:
           $ref: "#/components/schemas/ModelConfiguration"
         languageModelConfiguration:
           $ref: "#/components/schemas/ModelConfiguration"
@@ -2992,16 +3023,16 @@ components:
           type: "number"
           format: "double"
           description: The maximum number of minutes to train the model.
-          default: 10
+          default: 14400
           minimum: 0
-          maximum: 100000
+          maximum: 1000000
         maxEpochs:
           type: "number"
           format: "double"
           description: The maximum number of epochs to train the model.
           default: 100
           minimum: 0
-          maximum: 100000
+          maximum: 1000000
         maxSequenceWindow:
           type: "integer"
           description: |
@@ -3023,9 +3054,11 @@ components:
           default: true
         rareCategoryReplacementMethod:
           description: |
-            Specifies, if the rare categories for categoricals will be replaced by a constant
-            _RARE_ or by a sample from non-rare categories.
-            Only applicable if valueProtection is set to True.
+            Specifies how rare categories will be sampled.
+            Only applicable if value protection has been enabled.
+            
+            - `CONSTANT`: Replace rare categories by a constant `_RARE_` token.
+            - `SAMPLE`: Replace rare categories by a sample from non-rare categories.
           type: "string"
           enum:
             - "CONSTANT"
@@ -3071,6 +3104,7 @@ components:
       properties:
         id:
           type: "string"
+          description: "The unique identifier of the step."
         modelLabel:
           type: "string"
           description: |
@@ -3085,6 +3119,20 @@ components:
           type: "integer"
           format: "int32"
           description: "The number of previous restarts for the corresponding task."
+          default: 0
+        taskType:
+          type: string
+          enum:
+            - "SYNC"
+            - "TRAIN_TABULAR"
+            - "TRAIN_LANGUAGE"
+            - "FINALIZE_TRAINING"
+            - "GENERATE_TABULAR"
+            - "GENERATE_LANGUAGE"
+            - "FINALIZE_GENERATION"
+            - "PROBE_TABULAR"
+            - "PROBE_LANGUAGE"
+            - "FINALIZE_PROBING"
         stepCode:
           type: "string"
           enum:
@@ -3095,7 +3143,6 @@ components:
             - "GENERATE_MODEL_REPORT_DATA"
             - "CREATE_MODEL_REPORT"
             - "FINALIZE_TRAINING"
-            - "PULL_CONTEXT_DATA"
             - "GENERATE_DATA"
             - "CREATE_DATA_REPORT"
             - "FINALIZE_GENERATION"
@@ -3130,8 +3177,10 @@ components:
       properties:
         value:
           type: "integer"
+          default: 0
         max:
           type: "integer"
+          default: 1
     ProgressStatus:
       type: "string"
       description: |
@@ -3187,12 +3236,9 @@ components:
           description: |
             The total compute time in seconds used for generating this synthetic dataset.
             This is the sum of the compute time of all trained tasks.
-        noOfShares:
-          type: "integer"
-          description: "Number of shares of this synthetic dataset."
         noOfLikes:
-            type: "integer"
-            description: "Number of likes of this synthetic dataset."
+          type: "integer"
+          description: "Number of likes of this synthetic dataset."
     SyntheticDatasetListItem:
       type: "object"
       description: "Essential synthetic dataset details for listings."
@@ -3213,9 +3259,7 @@ components:
           $ref: "#/components/schemas/SyntheticDatasetUsage"
       required:
         - "id"
-        - "name"
         - "generationStatus"
-        - "metadata"
     SyntheticDataset:
       type: "object"
       description: |
@@ -3225,8 +3269,8 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/SyntheticDatasetId"
-        generator:
-          $ref: "#/components/schemas/BaseResource"
+        generatorId:
+          $ref: "#/components/schemas/GeneratorId"
         metadata:
           $ref: "#/components/schemas/Metadata"
         name:
@@ -3250,9 +3294,7 @@ components:
           $ref: "#/components/schemas/SyntheticDatasetUsage"
       required:
         - "id"
-        - "name"
         - "generationStatus"
-        - "metadata"
     SyntheticDatasetFormat:
       type: "string"
       enum:
@@ -3300,10 +3342,12 @@ components:
       type: "string"
       description: |
         The base64-encoded string derived from a json line file containing the specified sample seed data.
+        This allows conditional live probing via non-python clients.
     SyntheticTableSampleSeedData:
       type: "string"
       description: |
         The base64-encoded string derived from a Parquet file containing the specified sample seed data.
+        This allows conditional generation as well as live probing via python clients.
     SyntheticTableConfiguration:
       type: "object"
       description: "The sample configuration for a synthetic table"
@@ -3355,25 +3399,15 @@ components:
           $ref: "#/components/schemas/SourceTableName"
         configuration:
           $ref: "#/components/schemas/SyntheticTableConfiguration"
-        modelMetrics:
+        tabularModelMetrics:
           $ref: "#/components/schemas/ModelMetrics"
         languageModelMetrics:
           $ref: "#/components/schemas/ModelMetrics"
         foreignKeys:
           type: "array"
-          description: The foreign keys of this table.
+          description: "The foreign keys of a table."
           items:
-            properties:
-              column:
-                $ref: "#/components/schemas/ForeignKeyColumn"
-              referencedTable:
-                $ref: "#/components/schemas/ForeignKeyReferencedTable"
-              isContext:
-                $ref: "#/components/schemas/ForeignKeyIsContext"
-            required:
-              - column
-              - referencedTable
-              - isContext
+            $ref: "#/components/schemas/SourceForeignKey"
         totalRows:
           $ref: "#/components/schemas/SyntheticTableTotalRows"
         totalDatapoints:
@@ -3381,7 +3415,7 @@ components:
         sourceTableTotalRows:
           $ref: "#/components/schemas/SourceTableTotalRows"
       required:
-        - name
+        - "name"
     # Delivery
     SyntheticDatasetDelivery:
       type: "object"
@@ -3539,7 +3573,6 @@ components:
           $ref: "#/components/schemas/AssistantThreadUsage"
       required:
         - "id"
-        - "metadata"
     AssistantThread:
       type: "object"
       description: "A assistant thread."
@@ -3572,6 +3605,8 @@ components:
             $ref: "#/components/schemas/AssistantMessage"
         usage:
           $ref: "#/components/schemas/AssistantThreadUsage"
+      required:
+        - "id"
     AssistantMessageId:
       type: "string"
       format: "uuid"
@@ -3648,9 +3683,6 @@ components:
     AssistantThreadUsage:
       type: "object"
       properties:
-        noOfShares:
-          type: "integer"
-          description: "Number of shares of this assistant thread."
         totalTokensConsumed:
           type: "integer"
           format: "int64"
@@ -3683,9 +3715,12 @@ components:
     # COMPUTES
     ComputeId:
       type: "string"
+      description: "The unique identifier of a compute resource. Not applicable for SDK."
       format: "uuid"
     ComputeName:
       type: "string"
+      description: "The name of a compute resource."
+      minLength: 1
     ComputeType:
       type: "string"
       description: "The type of compute."
@@ -3783,6 +3818,187 @@ components:
           $ref: "#/components/schemas/ComputeSecretsParams"
         orderIndex:
           $ref: "#/components/schemas/ComputeOrderIndex"
+
+    # ORGANIZATIONS
+    OrganizationId:
+      type: "string"
+      format: "uuid"
+      description: "The unique identifier of an organization."
+    OrganizationName:
+      type: "string"
+      description: | 
+        The name of an organization.
+        Contains only alphanumeric characters, hyphens, and underscores. Must start or end with alphanumeric.
+        It must be globally case-insensitive unique.
+      maxLength: 64
+    OrganizationDisplayName:
+      type: "string"
+      description: "The display name of an organization."
+    OrganizationDescription:
+      type: "string"
+      description: "The description of an organization. Supports markdown."
+    OrganizationLogo:
+      type: "string"
+      format: "uri"
+      description: "The URL of the organization's logo."
+    OrganizationLogoBase64:
+      type: "string"
+      description: "The base64-encoded image of the organization's logo."
+    OrganizationEmail:
+      type: "string"
+      description: "The email address of the organization."
+    OrganizationWebsite:
+      type: "string"
+      format: "uri"
+      description: "The URL of the organization's website."
+    OrganizationListItem:
+      type: "object"
+      description: "Essential organization details for listings."
+      properties:
+        id:
+          $ref: "#/components/schemas/OrganizationId"
+        displayName:
+          $ref: "#/components/schemas/OrganizationDisplayName"
+        description:
+          $ref: "#/components/schemas/OrganizationDescription"
+        logo:
+          $ref: "#/components/schemas/OrganizationLogo"
+      required:
+        - "id"
+        - "displayName"
+    Organization:
+      type: "object"
+      description: "An organization that owns resources."
+      properties:
+        id:
+          $ref: "#/components/schemas/OrganizationId"
+        name:
+          $ref: "#/components/schemas/OrganizationName"
+        displayName:
+          $ref: "#/components/schemas/OrganizationDisplayName"
+        description:
+          $ref: "#/components/schemas/OrganizationDescription"
+        logo:
+          $ref: "#/components/schemas/OrganizationLogo"
+        email:
+          $ref: "#/components/schemas/OrganizationEmail"
+        website:
+          $ref: "#/components/schemas/OrganizationWebsite"
+        members:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/UserListItem"
+      required:
+        - "id"
+        - "name"
+        - "displayName"
+    MemberRole:
+      type: "string"
+      enum:
+        - "VIEWER"
+        - "CONTRIBUTOR"
+        - "ADMIN"
+      description: |
+        The role of the user in the organization
+        
+        - `VIEWER`: The user can view and use all resources of the organization
+        - `CONTRIBUTOR`: The user can create new resources for an organization, and becomes resource ADMIN
+        - `ADMIN`: The user can manage members and all resources of an organization
+    OrganizationMember:
+      type: "object"
+      description: "A member of an organization."
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        role:
+          $ref: "#/components/schemas/MemberRole"
+    Visibility:
+      type: "string"
+      enum:
+        - "PUBLIC"
+        - "PRIVATE"
+      description: |
+        Indicates the visibility of the resource. 
+        
+        - `PUBLIC` resources are visible to all users.
+        - `PRIVATE` resources are visible to the owner. And in case it is owned by an organization, also visible by all members of that organization.
+    OrganizationInvite:
+      type: "object"
+      description: "An non-personalized time-boxed invite to join an organization."
+      properties:
+        token:
+          type: "string"
+          description: "The generated token, encrypting organization, expiration timestamp, and role (VIEW)."
+        link:
+          type: "string"
+          description: "The generated invite link."
+        expirationDate:
+          type: "string"
+          format: "date-time"
+          description: "The expiration date of the invite link. 72 hours after creation."
+        organizationId:
+          $ref: "#/components/schemas/OrganizationId"
+    OrganizationConfig:
+      type: "object"
+      description: "The configuration for creating a new organization."
+      properties:
+        name:
+          $ref: "#/components/schemas/OrganizationName"
+        displayName:
+          $ref: "#/components/schemas/OrganizationDisplayName"
+        description:
+          $ref: "#/components/schemas/OrganizationDescription"
+        logoBase64:
+          $ref: "#/components/schemas/OrganizationLogoBase64"
+        email:
+          $ref: "#/components/schemas/OrganizationEmail"
+        website:
+          $ref: "#/components/schemas/OrganizationWebsite"
+      required:
+        - "name"
+        - "displayName"
+    OrganizationPatchConfig:
+      type: "object"
+      description: "The configuration for updating an organization."
+      properties:
+        name:
+          $ref: "#/components/schemas/OrganizationName"
+        displayName:
+          $ref: "#/components/schemas/OrganizationDisplayName"
+        description:
+          $ref: "#/components/schemas/OrganizationDescription"
+        logoBase64:
+          $ref: "#/components/schemas/OrganizationLogoBase64"
+        email:
+          $ref: "#/components/schemas/OrganizationEmail"
+        website:
+          $ref: "#/components/schemas/OrganizationWebsite"
+    MemberRolePatchConfig:
+      type: "object"
+      description: "The configuration for updating a member's role."
+      properties:
+        role:
+          $ref: "#/components/schemas/MemberRole"
+      required:
+        - "role"
+
+    # ACCOUNT
+    AccountId:
+      type: "string"
+      format: "uuid"
+      description: "The unique identifier of an account (either a user or an organization)."
+    AccountName:
+      type: "string"
+      description: "The name of an account (either a user or an organization)."
+    AccountType:
+      type: "string"
+      enum:
+        - "USER"
+        - "ORGANIZATION"
+    AccountImage:
+      type: "string"
+      format: "uri"
+      description: "The URL of the account's image."
 
     # SYSTEM
     UsageReportPeriod:
@@ -3903,6 +4119,7 @@ components:
         targetColumn:
           description: "The name of the target column."
           type: "string"
+          minLength: 1
         sensitiveColumns:
           description: "The names of the sensitive columns."
           type: "array"
@@ -3941,6 +4158,15 @@ components:
           default: 1.0
           minimum: 0.0
           maximum: 10000.0
+        delta:
+            type: "number"
+            format: "double"
+            description: |
+              The delta value for differential privacy. It is the probability of the privacy guarantee not holding. 
+              The smaller the delta, the more confident you can be that the privacy guarantee holds.
+            default: 1e-5
+            minimum: 0.0
+            maximum: 1.0
 
     #################
     ## mostlyai-qa ##
