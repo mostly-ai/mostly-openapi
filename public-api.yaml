@@ -258,6 +258,10 @@ paths:
       responses:
         "200":
           description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connector"
   /connectors/{id}/visibility:
     parameters:
       - $ref: "#/components/parameters/connectorIdPath"
@@ -752,6 +756,10 @@ paths:
       responses:
         "200":
           description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Generator"
   /generators/{id}/visibility:
     parameters:
       - $ref: "#/components/parameters/generatorIdPath"
@@ -1063,6 +1071,10 @@ paths:
       responses:
         "200":
           description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyntheticDataset"
   /synthetic-datasets/{id}/visibility:
     parameters:
       - $ref: "#/components/parameters/syntheticDatasetIdPath"
@@ -1909,7 +1921,9 @@ components:
       style: "form"
       explode: false
       schema:
-        $ref: "#/components/schemas/AccountId"
+        type: array
+        items:
+          $ref: "#/components/schemas/AccountId"
     reportType:
       name: "reportType"
       description: "Synthetic dataset report type"
@@ -2037,7 +2051,7 @@ components:
         version:
           type: "string"
           description: "The version number of the service."
-          example: "v209"
+          example: "4.0.0"
         assistant:
           type: "boolean"
           description: "A flag indicating if the assistant is enabled."
@@ -2637,6 +2651,8 @@ components:
           $ref: "#/components/schemas/GeneratorUsage"
         metadata:
           $ref: "#/components/schemas/Metadata"
+        accuracy:
+          $ref: "#/components/schemas/GeneratorAccuracy"
       required:
         - "id"
         - "trainingStatus"
@@ -3314,7 +3330,7 @@ components:
       description: |
         Number of generated samples. Only applicable for subject tables.
         If neither size nor seed is provided, then the default behavior for Synthetic Datasets is to generate the
-        same size of samples as the original, and the default behavior for Synthetic Datasets is to generate one
+        same size of samples as the original, and the default behavior for Synthetic Probes is to generate one
         subject only.
       minimum: 1
     SamplingTemperature:
@@ -3857,6 +3873,8 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/OrganizationId"
+        name:
+          $ref: "#/components/schemas/OrganizationName"
         displayName:
           $ref: "#/components/schemas/OrganizationDisplayName"
         description:
