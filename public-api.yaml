@@ -1775,6 +1775,12 @@ paths:
       tags: [ "Organizations" ]
       parameters:
         - $ref: "#/components/parameters/organizationIdPath"
+        - in: "query"
+          name: token
+          required: false
+          schema:
+            type: "string"
+            description: "The token for the invite"
       responses:
         "200":
           description: "OK"
