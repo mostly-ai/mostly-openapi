@@ -1775,12 +1775,7 @@ paths:
       tags: [ "Organizations" ]
       parameters:
         - $ref: "#/components/parameters/organizationIdPath"
-        - in: "query"
-          name: token
-          required: false
-          schema:
-            type: "string"
-            description: "The token for the invite"
+        - $ref: "#/components/parameters/inviteToken"
       responses:
         "200":
           description: "OK"
@@ -2091,7 +2086,6 @@ components:
           $ref: "#/components/schemas/UserAvatar"
     UserId:
       type: "string"
-      format: "uuid"
       description: "The unique identifier of a user."
     UserName:
       type: "string"
@@ -2109,7 +2103,6 @@ components:
       description: "The email of a user"
     UserAvatar:
       type: "string"
-      format: "uri"
       description: "The URL of the user's avatar"
     UserAvatarBase64:
       type: "string"
@@ -2242,7 +2235,6 @@ components:
       properties:
         id:
           type: "string"
-          format: "uuid"
           description: "The unique identifier of the notification."
         type:
           $ref: "#/components/schemas/NotificationType"
@@ -2322,7 +2314,6 @@ components:
     # CONNECTOR
     ConnectorId:
       type: "string"
-      format: "uuid"
       description: "The unique identifier of a connector."
     ConnectorName:
       type: "string"
@@ -2439,7 +2430,6 @@ components:
           $ref: "#/components/schemas/ConnectorUsage"
         tableId:
           type: "string"
-          format: "uuid"
           description: |
             Optional. ID of a source table or a synthetic table, that this connector belongs to.
             If not set, then this connector is managed independently of any generator or synthetic dataset.
@@ -2602,7 +2592,6 @@ components:
     # GENERATOR
     GeneratorId:
       type: "string"
-      format: "uuid"
       description: "The unique identifier of a generator."
     GeneratorName:
       type: "string"
@@ -2696,12 +2685,12 @@ components:
     # Source Table
     SourceTableId:
       type: "string"
-      format: "uuid"
       description: "The unique identifier of a source table."
     SourceTableName:
       type: "string"
       description: "The name of a source table. It must be unique within a generator."
       minLength: 1
+      maxLength: 256
     SourceTablePrimaryKey:
       type: "string"
       description: "The column name of the primary key."
@@ -2765,12 +2754,12 @@ components:
     SourceColumnId:
       type: "string"
       readOnly: true
-      format: "uuid"
       description: "The unique identifier of a source column."
     SourceColumnName:
       type: "string"
       description: "The name of a source column. It must be unique within a source table."
       minLength: 1
+      maxLength: 256
     SourceColumnIncluded:
       type: "boolean"
       default: true
@@ -2836,7 +2825,6 @@ components:
     SourceForeignKeyId:
       type: "string"
       readOnly: true
-      format: "uuid"
       description: "The unique identifier of a foreign key."
     ForeignKeyColumn:
       type: "string"
@@ -3143,32 +3131,9 @@ components:
           description: "The number of previous restarts for the corresponding task."
           default: 0
         taskType:
-          type: string
-          enum:
-            - "SYNC"
-            - "TRAIN_TABULAR"
-            - "TRAIN_LANGUAGE"
-            - "FINALIZE_TRAINING"
-            - "GENERATE_TABULAR"
-            - "GENERATE_LANGUAGE"
-            - "FINALIZE_GENERATION"
-            - "PROBE_TABULAR"
-            - "PROBE_LANGUAGE"
-            - "FINALIZE_PROBING"
+          $ref: "#/components/schemas/TaskType"
         stepCode:
-          type: "string"
-          enum:
-            - "PULL_TRAINING_DATA"
-            - "ANALYZE_TRAINING_DATA"
-            - "ENCODE_TRAINING_DATA"
-            - "TRAIN_MODEL"
-            - "GENERATE_MODEL_REPORT_DATA"
-            - "CREATE_MODEL_REPORT"
-            - "FINALIZE_TRAINING"
-            - "GENERATE_DATA"
-            - "CREATE_DATA_REPORT"
-            - "FINALIZE_GENERATION"
-            - "DELIVER_DATA"
+          $ref: "#/components/schemas/StepCode"
         startDate:
           type: "string"
           description: |
@@ -3194,6 +3159,36 @@ components:
           $ref: "#/components/schemas/ProgressValue"
         status:
           $ref: "#/components/schemas/ProgressStatus"
+    TaskType:
+      type: "string"
+      description: "The type of the task."
+      enum:
+        - "SYNC"
+        - "TRAIN_TABULAR"
+        - "TRAIN_LANGUAGE"
+        - "FINALIZE_TRAINING"
+        - "GENERATE_TABULAR"
+        - "GENERATE_LANGUAGE"
+        - "FINALIZE_GENERATION"
+        - "PROBE_TABULAR"
+        - "PROBE_LANGUAGE"
+        - "FINALIZE_PROBING"
+    StepCode:
+      type: "string"
+      description: "The unique code for the step."
+      enum:
+        - "PULL_TRAINING_DATA"
+        - "ANALYZE_TRAINING_DATA"
+        - "ENCODE_TRAINING_DATA"
+        - "TRAIN_MODEL"
+        - "GENERATE_MODEL_REPORT_DATA"
+        - "CREATE_MODEL_REPORT"
+        - "FINALIZE_TRAINING"
+        - "GENERATE_DATA"
+        - "CREATE_DATA_REPORT"
+        - "FINALIZE_GENERATION"
+        - "DELIVER_DATA"
+        - "FINALIZE_PROBING"
     ProgressValue:
       type: "object"
       properties:
@@ -3229,7 +3224,6 @@ components:
     # SYNTHETIC DATASET
     SyntheticDatasetId:
       type: "string"
-      format: "uuid"
       description: "The unique identifier of a synthetic dataset."
     SyntheticDatasetName:
       type: "string"
@@ -3359,7 +3353,6 @@ components:
         Only applicable for subject tables.
       type: "string"
       readOnly: true
-      format: "uuid"
     SyntheticTableSampleSeedDict:
       type: "string"
       description: |
@@ -3398,7 +3391,6 @@ components:
           $ref: "#/components/schemas/ComputeId"
     SyntheticTableId:
       type: "string"
-      format: "uuid"
       description: "The unique identifier of a synthetic table."
     SyntheticTableName:
       type: "string"
@@ -3570,7 +3562,6 @@ components:
           $ref: "#/components/schemas/AssistantSystemInstructions"
     AssistantThreadId:
       type: "string"
-      format: "uuid"
       description: "The unique identifier of a assistant thread."
     AssistantThreadName:
       type: "string"
@@ -3631,7 +3622,6 @@ components:
         - "id"
     AssistantMessageId:
       type: "string"
-      format: "uuid"
       description: "The unique identifier of a assistant message."
     AssistantMessageRole:
       type: "string"
@@ -3653,12 +3643,10 @@ components:
     AssistantMessageContent:
       type: "string"
       minLength: 0
-      maxLength: 65000
       description: "The content of a message"
     AssistantMessageContentDelta:
       type: "string"
-      minLength: 1
-      maxLength: 65000
+      minLength: 0
       description: "The partial content of a message"
     AssistantMessageFinishReason:
       type: "string"
@@ -3738,7 +3726,6 @@ components:
     ComputeId:
       type: "string"
       description: "The unique identifier of a compute resource. Not applicable for SDK."
-      format: "uuid"
     ComputeName:
       type: "string"
       description: "The name of a compute resource."
@@ -3844,7 +3831,6 @@ components:
     # ORGANIZATIONS
     OrganizationId:
       type: "string"
-      format: "uuid"
       description: "The unique identifier of an organization."
     OrganizationName:
       type: "string"
@@ -3861,7 +3847,6 @@ components:
       description: "The description of an organization. Supports markdown."
     OrganizationLogo:
       type: "string"
-      format: "uri"
       description: "The URL of the organization's logo."
     OrganizationLogoBase64:
       type: "string"
@@ -3871,7 +3856,6 @@ components:
       description: "The email address of the organization."
     OrganizationWebsite:
       type: "string"
-      format: "uri"
       description: "The URL of the organization's website."
     OrganizationListItem:
       type: "object"
@@ -4009,7 +3993,6 @@ components:
     # ACCOUNT
     AccountId:
       type: "string"
-      format: "uuid"
       description: "The unique identifier of an account (either a user or an organization)."
     AccountName:
       type: "string"
@@ -4021,7 +4004,6 @@ components:
         - "ORGANIZATION"
     AccountImage:
       type: "string"
-      format: "uri"
       description: "The URL of the account's image."
 
     # SYSTEM
@@ -4079,9 +4061,10 @@ components:
         - `TABULAR_DATETIME`: Model samples each part of a datetime value.
         - `TABULAR_DATETIME_RELATIVE`: Model samples the relative difference between datetimes within a sequence.
         - `TABULAR_LAT_LONG`: Model samples a latitude-longitude column. The format is "latitude,longitude".
-        - `LANGUAGE_TEXT`: Model will train a distinct LANGUAGE model for this column, to then generate free text.
-
-        Encoding types, that are not being prefixed with either `TABULAR` or `LANGUAGE` have been deprecated.
+        - `LANGUAGE_TEXT`: Model will sample free text, using a LANGUAGE model.
+        - `LANGUAGE_CATEGORICAL`: Model samples from existing (non-rare) categories, using a LANGUAGE model.
+        - `LANGUAGE_NUMERIC`: Model samples from the valid numeric value range, using a LANGUAGE model.
+        - `LANGUAGE_DATETIME`: Model samples from the valid datetime value range, using a LANGUAGE model.
       enum:
         - "AUTO"
         - "TABULAR_CATEGORICAL"
@@ -4094,6 +4077,9 @@ components:
         - "TABULAR_DATETIME_RELATIVE"
         - "TABULAR_LAT_LONG"
         - "LANGUAGE_TEXT"
+        - "LANGUAGE_CATEGORICAL"
+        - "LANGUAGE_NUMERIC"
+        - "LANGUAGE_DATETIME"
       default: "AUTO"
     RebalancingConfig:
       type: "object"
