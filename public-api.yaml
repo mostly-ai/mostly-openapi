@@ -1382,6 +1382,20 @@ paths:
                 properties:
                   apiKey:
                     type: "string"
+  /users/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/userIdPath"
+    get:
+      summary: "Retrieve public user info"
+      operationId: "getUserInfo"
+      tags: [ "Users" ]
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
   /users/me:
     get:
       summary: "Retrieve current user info"
@@ -2060,7 +2074,7 @@ components:
     # USERS
     User:
       type: "object"
-      description: "A user of the service."
+      description: "The public attributes of a user of the service."
       properties:
         id:
           $ref: "#/components/schemas/UserId"
@@ -2070,10 +2084,13 @@ components:
           $ref: "#/components/schemas/UserFirstName"
         lastName:
           $ref: "#/components/schemas/UserLastName"
-        email:
-          $ref: "#/components/schemas/UserEmail"
         avatar:
           $ref: "#/components/schemas/UserAvatar"
+        organizations:
+          type: "array"
+          description: "The organizations the user belongs to"
+          items:
+            $ref: "#/components/schemas/OrganizationListItem"
     UserListItem:
       type: "object"
       description: "Essential information about a user for public listings."
@@ -2082,6 +2099,10 @@ components:
           $ref: "#/components/schemas/UserId"
         name:
           $ref: "#/components/schemas/UserName"
+        firstName:
+          $ref: "#/components/schemas/UserFirstName"
+        lastName:
+          $ref: "#/components/schemas/UserLastName"
         avatar:
           $ref: "#/components/schemas/UserAvatar"
     UserId:
@@ -2089,7 +2110,10 @@ components:
       description: "The unique identifier of a user."
     UserName:
       type: "string"
-      description: "The name of a user. As of now, it is the concatenation of the first name and last name."
+      description: |
+        The name of a user.
+        Contains only alphanumeric characters, hyphens, and underscores. Must start or end with alphanumeric.
+        It must be globally case-insensitive unique considering organizations and users.
     UserFirstName:
       type: "string"
       description: "First name of a user"
@@ -2129,6 +2153,8 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/UserId"
+        name:
+          $ref: "#/components/schemas/UserName"
         firstName:
           $ref: "#/components/schemas/UserFirstName"
         lastName:
@@ -2163,6 +2189,8 @@ components:
     UserSettingsProfileUpdateConfig:
       type: "object"
       properties:
+        name:
+          $ref: "#/components/schemas/UserName"
         firstName:
           $ref: "#/components/schemas/UserFirstName"
         lastName:
@@ -3871,9 +3899,18 @@ components:
           $ref: "#/components/schemas/OrganizationDescription"
         logo:
           $ref: "#/components/schemas/OrganizationLogo"
+        metadata:
+          $ref: "#/components/schemas/OrganizationMetadata"
       required:
         - "id"
         - "displayName"
+    OrganizationMetadata:
+      type: "object"
+      description: "The metadata of an organization."
+      readOnly: true
+      properties:
+        currentUserMemberRole:
+          $ref: "#/components/schemas/MemberRole"
     Organization:
       type: "object"
       description: "An organization that owns resources."
@@ -3896,6 +3933,8 @@ components:
           type: "array"
           items:
             $ref: "#/components/schemas/UserListItem"
+        metadata:
+          $ref: "#/components/schemas/OrganizationMetadata"
       required:
         - "id"
         - "name"
@@ -3917,7 +3956,7 @@ components:
       description: "A member of an organization."
       properties:
         user:
-          $ref: "#/components/schemas/User"
+          $ref: "#/components/schemas/UserListItem"
         role:
           $ref: "#/components/schemas/MemberRole"
     Visibility:
