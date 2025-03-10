@@ -435,6 +435,7 @@ paths:
         Export the generator as a self-contained single file, that can then be imported as a fully functional
         generator on a MOSTLY AI server.
       operationId: "exportGeneratorToFile"
+      x-stream-response: true
       tags: [ "Generators" ]
       responses:
         "200":
@@ -727,6 +728,7 @@ paths:
     get:
       summary: "Download training logs"
       operationId: "downloadTrainingLogs"
+      x-stream-response: true
       tags: [ "Generator Training" ]
       parameters:
         - $ref: "#/components/parameters/shortLivedFileToken"
@@ -1021,6 +1023,7 @@ paths:
     get:
       summary: "Download generation logs"
       operationId: "downloadGenerationLogs"
+      x-stream-response: true
       tags: [ "Synthetic Generation" ]
       parameters:
         - $ref: "#/components/parameters/shortLivedFileToken"
@@ -1038,6 +1041,7 @@ paths:
     get:
       summary: "Download synthetic dataset"
       operationId: "downloadSyntheticDataset"
+      x-stream-response: true
       tags: [ "Synthetic Datasets" ]
       parameters:
         - name: "format"
@@ -1245,6 +1249,7 @@ paths:
     get:
       summary: "Export the assistant thread"
       operationId: "exportThread"
+      x-stream-response: true
       parameters:
         - $ref: "#/components/parameters/shortLivedFileToken"
       responses:
@@ -1261,7 +1266,7 @@ paths:
     post:
       summary: "Create a message"
       operationId: "createAssistantMessage"
-      x-codegen-ignore: true
+      x-flow-response: true
       tags: [ "Assistant" ]
       requestBody:
         required: true
@@ -1321,6 +1326,7 @@ paths:
     get:
       summary: "Fetch file in assistant thread"
       operationId: "fetchAssistantThreadFile"
+      x-stream-response: true
       tags: [ "Assistant" ]
       parameters:
         - name: "filepath"
@@ -1573,6 +1579,7 @@ paths:
     get:
       summary: "Download usage report as CSV"
       operationId: "downloadUsageReport"
+      x-stream-response: true
       responses:
         "200":
           description: "OK"
@@ -3106,6 +3113,11 @@ components:
           $ref: "#/components/schemas/DifferentialPrivacyConfig"
         compute:
           $ref: "#/components/schemas/ComputeId"
+        enableModelReport:
+          type: "boolean"
+          description: |
+            If false, then the Model report is not generated.
+          default: true
 
     # JOB_PROGRESS
     JobProgress:
@@ -3195,12 +3207,14 @@ components:
         - "TRAIN_TABULAR"
         - "TRAIN_LANGUAGE"
         - "FINALIZE_TRAINING"
-        - "GENERATE_TABULAR"
-        - "GENERATE_LANGUAGE"
+        - "GENERATE_TABULAR"  # DEPRECATED
+        - "GENERATE_LANGUAGE"  # DEPRECATED
         - "FINALIZE_GENERATION"
-        - "PROBE_TABULAR"
-        - "PROBE_LANGUAGE"
+        - "PROBE_TABULAR"  # DEPRECATED
+        - "PROBE_LANGUAGE"  # DEPRECATED
         - "FINALIZE_PROBING"
+        - "GENERATE"
+        - "PROBE"
     StepCode:
       type: "string"
       description: "The unique code for the step."
@@ -3209,11 +3223,15 @@ components:
         - "ANALYZE_TRAINING_DATA"
         - "ENCODE_TRAINING_DATA"
         - "TRAIN_MODEL"
+        - "GENERATE_DATA"  # DEPRECATED
         - "GENERATE_MODEL_REPORT_DATA"
         - "CREATE_MODEL_REPORT"
         - "FINALIZE_TRAINING"
-        - "GENERATE_DATA"
-        - "CREATE_DATA_REPORT"
+        - "GENERATE_DATA_TABULAR"
+        - "GENERATE_DATA_LANGUAGE"
+        - "CREATE_DATA_REPORT"  # DEPRECATED
+        - "CREATE_DATA_REPORT_TABULAR"
+        - "CREATE_DATA_REPORT_LANGUAGE"
         - "FINALIZE_GENERATION"
         - "DELIVER_DATA"
         - "FINALIZE_PROBING"
@@ -3336,6 +3354,8 @@ components:
           $ref: "#/components/schemas/GeneratorAccuracy"
         usage:
           $ref: "#/components/schemas/SyntheticDatasetUsage"
+        compute:
+          $ref: "#/components/schemas/ComputeId"
       required:
         - "id"
         - "generationStatus"
@@ -3413,10 +3433,12 @@ components:
           $ref: "#/components/schemas/ImputationConfig"
         fairness:
           $ref: "#/components/schemas/FairnessConfig"
-        tabularCompute:
-          $ref: "#/components/schemas/ComputeId"
-        languageCompute:
-          $ref: "#/components/schemas/ComputeId"
+        enableDataReport:
+          type: "boolean"
+          description: |
+            If false, then the Data report is not generated.
+            If enableDataReport is set to false on generator, then enableDataReport is automatically set to false.
+          default: true
     SyntheticTableId:
       type: "string"
       description: "The unique identifier of a synthetic table."
@@ -3494,6 +3516,8 @@ components:
             $ref: "#/components/schemas/SyntheticTableConfig"
         delivery:
           $ref: "#/components/schemas/SyntheticDatasetDelivery"
+        compute:
+          $ref: "#/components/schemas/ComputeId"
     SyntheticDatasetPatchConfig:
       type: "object"
       properties:
@@ -3503,6 +3527,8 @@ components:
           $ref: "#/components/schemas/SyntheticDatasetDescription"
         delivery:
           $ref: "#/components/schemas/SyntheticDatasetDelivery"
+        compute:
+          $ref: "#/components/schemas/ComputeId"
     SyntheticTablePatchConfig:
       type: "object"
       description: "The configuration for updating a synthetic table."
