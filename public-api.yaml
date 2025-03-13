@@ -1621,12 +1621,15 @@ paths:
                 properties:
                   models:
                     type: "array"
+                    description: "The list of available LANGUAGE models."
                     items:
                       type: "string"
-                      description: "The model identifiers for the available models, without the LANGUAGE prefix."
+                      description: "The model identifier of a HuggingFace-hosted LANGUAGE model of class `AutoModelForCausalLM`."
                     example:
-                      - "MOSTLY_AI/LSTM_not_pretrained"
-                      - "mistralai/Mistral-7B-Instruct-v0.2"
+                      - "MOSTLY_AI/LSTMFromScratch-3m"
+                      - "microsoft/phi-1_5"
+                      - "mistralai/Mistral-7B-v0.3"
+                      - "Qwen/Qwen2.5-1.5B"
                   huggingFaceToken:
                     type: "string"
                     description: "The access token for the HuggingFace model hub."
@@ -1642,12 +1645,15 @@ paths:
               properties:
                 models:
                   type: "array"
+                  description: "The list of available LANGUAGE models."
                   items:
                     type: "string"
-                    description: "The model identifiers for the available models, without the LANGUAGE prefix."
+                    description: "The model identifier of a HuggingFace-hosted LANGUAGE model of class `AutoModelForCausalLM`."
                   example:
-                    - "MOSTLY_AI/LSTM_not_pretrained"
-                    - "mistralai/Mistral-7B-Instruct-v0.2"
+                    - "MOSTLY_AI/LSTMFromScratch-3m"
+                    - "microsoft/phi-1_5"
+                    - "mistralai/Mistral-7B-v0.3"
+                    - "Qwen/Qwen2.5-1.5B"
                 huggingFaceToken:
                   type: "string"
                   description: "The access token for the HuggingFace model hub."
@@ -2149,8 +2155,8 @@ components:
         - `VIEW`: The user can view and use the resource
         - `ADMIN`: The user can edit, delete and transfer ownership of the resource
       enum:
-      - "VIEW"
-      - "ADMIN"
+        - "VIEW"
+        - "ADMIN"
     UserLikeStatus:
       type: "boolean"
       description: A boolean indicating whether the user has liked the entity or not
@@ -3089,8 +3095,9 @@ components:
         enableFlexibleGeneration:
           type: "boolean"
           description: |
-            If true, then the trained generator can be used for rebalancing and imputation.
-            Only applicable for TABULAR models.
+            If true, then the trained generator can be used for conditional generation, rebalancing, imputation and fairness.
+            If none of these will be needed, then one can gain extra accuracy by disabling this feature. This will then result in a fixed 
+            column order being fed into the training process, rather than a column order, that is randomly permuted for every batch.
           default: true
         valueProtection:
           description: |
@@ -3657,17 +3664,16 @@ components:
           description: |
             List of all existing messages, excluding any system message.
             Example:
-              What's the square root of 9?   role: user        type: text
-              ok, I will write some python   role: assistant   type: text
-              r = math.sqrt(9)\nr            role: assistant   type: python
-              3                              role: tool        type: console
-              The answer is 3!               role: assistant   type: text
-              Plot me a random barplot       role: user        type: text
-              ... plt.savefig() ...          role: assistant   type: python
-              Here is ![img]() ...           role: assistant   type: text
-              Write me a random file         role: user        type: text
-              ... .to_csv() ...              role: assistant   type: python
-              Here is [file]() ...           role: assistant   type: text
+              What's the square root of 9?                      role: user        type: text
+              ok, I will write some python                      role: assistant   type: text
+              content: r = math.sqrt(9)\nr; result=3            role: assistant   type: python
+              The answer is 3!                                  role: assistant   type: text
+              Plot me a random barplot                          role: user        type: text
+              ... plt.savefig() ...                              role: assistant   type: python
+              Here is ![img]() ...                              role: assistant   type: text
+              Write me a random file                             role: user        type: text
+              ... .to_csv() ...                                 role: assistant   type: python
+              Here is [file]() ...                               role: assistant   type: text
           items:
             $ref: "#/components/schemas/AssistantMessage"
         usage:
@@ -3679,12 +3685,14 @@ components:
       description: "The unique identifier of a assistant message."
     AssistantMessageRole:
       type: "string"
-      description: "The role of the author of this message"
+      description: |
+        The role of the author of this message
+        user - message is written by assistant user
+        assistant - message is written by assistant
+        heartbeat - used to avoid connection timeouts in case of long responses ex. python code execution
       enum:
-        - "system"
         - "user"
         - "assistant"
-        - "tool"
         - "heartbeat"
     AssistantMessageContentType:
       type: "string"
@@ -3693,21 +3701,23 @@ components:
         - "text"
         - "python"
         - "console"
-        - "file"
+        - "files"
     AssistantMessageContent:
       type: "string"
       minLength: 0
       description: "The content of a message"
+    AssistantMessageFiles:
+      type: "array"
+      description: "files apply only to files content type and is a list of filenames"
+      items:
+        type: "object"
+        properties:
+          name:
+            type: "string"
     AssistantMessageContentDelta:
       type: "string"
       minLength: 0
       description: "The partial content of a message"
-    AssistantMessageFinishReason:
-      type: "string"
-      enum:
-        - "stop"
-        - "length"
-        - "tool_calls"
     AssistantMessage:
       type: "object"
       description: "A complete message."
@@ -3720,8 +3730,12 @@ components:
           $ref: "#/components/schemas/AssistantMessageContentType"
         content:
           $ref: "#/components/schemas/AssistantMessageContent"
-        finishReason:
-          $ref: "#/components/schemas/AssistantMessageFinishReason"
+        result:
+          type: string
+          description: "result applies only to python content type and is a result of python execution - the same console content type when streaming deltas"
+        files:
+          $ref: "#/components/schemas/AssistantMessageFiles"
+
         tokensConsumed:
           type: "integer"
           format: "int64"
@@ -3738,8 +3752,9 @@ components:
           $ref: "#/components/schemas/AssistantMessageContentType"
         delta:
           $ref: "#/components/schemas/AssistantMessageContentDelta"
-        finishReason:
-          $ref: "#/components/schemas/AssistantMessageFinishReason"
+        isFinished:
+          type: boolean
+          description: "Whether the message as a whole is finished."
         tokensConsumed:
           type: "integer"
           format: "int64"
@@ -3888,7 +3903,7 @@ components:
       description: "The unique identifier of an organization."
     OrganizationName:
       type: "string"
-      description: | 
+      description: |
         The name of an organization.
         Contains only alphanumeric characters, hyphens, and underscores. Must start or end with alphanumeric.
         It must be globally case-insensitive unique.
@@ -4234,14 +4249,14 @@ components:
           minimum: 0.0
           maximum: 10000.0
         delta:
-            type: "number"
-            format: "double"
-            description: |
-              The delta value for differential privacy. It is the probability of the privacy guarantee not holding. 
-              The smaller the delta, the more confident you can be that the privacy guarantee holds.
-            default: 1e-5
-            minimum: 0.0
-            maximum: 1.0
+          type: "number"
+          format: "double"
+          description: |
+            The delta value for differential privacy. It is the probability of the privacy guarantee not holding. 
+            The smaller the delta, the more confident you can be that the privacy guarantee holds.
+          default: 1e-5
+          minimum: 0.0
+          maximum: 1.0
 
     #################
     ## mostlyai-qa ##
