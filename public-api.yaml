@@ -53,8 +53,9 @@ paths:
     get:
       summary: "List connectors"
       description: |
-        Paginate through all connectors that the user has access to.
-        Only connectors, that are independent of a table, will be returned.
+        Paginate through all connectors the user has access to. 
+        Connectors with `UNLISTED` visibility will only be visible to their owners or to members of the owning organization.  
+        Only connectors that are not of type `FILE_UPLOAD` will be returned.
       operationId: "listConnectors"
       tags: [ "Connectors" ]
       parameters:
@@ -190,6 +191,7 @@ paths:
             - `ORACLE`: `schema.table`
             - `POSTGRES`: `schema.table`
             - `SNOWFLAKE`: `schema.table`
+            - `SQLITE`: `database.table`
       operationId: "listConnectorLocations"
       tags: [ "Connectors" ]
       parameters:
@@ -240,6 +242,47 @@ paths:
                       type: "string"
                     defaultModelEncodingType:
                       $ref: "#/components/schemas/ModelEncodingType"
+  /connectors/{id}/read-data:
+    post:
+      summary: "Read data from a connector"
+      description: "Fetch the data for a specific location from a connector."
+      operationId: "connectorReadData"
+      tags: [ "Connectors" ]
+      parameters:
+        - $ref: "#/components/parameters/connectorIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectorReadDataConfig"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/octet-stream:
+              schema:
+                type: "string"
+                format: "binary"
+                description: "Binary Parquet file containing the requested data."
+  /connectors/{id}/write-data:
+    post:
+      summary: "Write data to a connector"
+      description: "Write data to a specific location within a destination connector."
+      operationId: "connectorWriteData"
+      tags: [ "Connectors" ]
+      parameters:
+        - $ref: "#/components/parameters/connectorIdPath"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ConnectorWriteDataConfig"
+      responses:
+        "200":
+          description: "OK"
+
   /connectors/{id}/transfer:
     parameters:
       - $ref: "#/components/parameters/connectorIdPath"
@@ -283,7 +326,9 @@ paths:
   /generators:
     get:
       summary: "List generators"
-      description: "Paginate through all generators that the user has access to."
+      description: |
+        Paginate through all generators the user has access to. 
+        Generators with `UNLISTED` visibility will only be visible to their owners or to members of the owning organization.
       operationId: "listGenerators"
       tags: [ "Generators" ]
       parameters:
@@ -783,6 +828,9 @@ paths:
   /synthetic-datasets:
     get:
       summary: "List synthetic datasets"
+      description: |
+        Paginate through all synthetic datasets the user has access to. 
+        Synthetic datasets with `UNLISTED` visibility will only be visible to their owners or to members of the owning organization.
       operationId: "listSyntheticDatasets"
       tags: [ "Synthetic Datasets" ]
       parameters:
@@ -1151,6 +1199,9 @@ paths:
   /assistant/threads:
     get:
       summary: "List assistant threads"
+      description: |
+        Paginate through all assistant threads the user has access to. 
+        Threads with `UNLISTED` visibility will only be visible to their owners or to members of the owning organization.
       operationId: "listAssistantThreads"
       tags: [ "Assistant" ]
       parameters:
@@ -1227,6 +1278,24 @@ paths:
       responses:
         "200":
           description: "OK"
+
+  /assistant/threads/{id}/visibility:
+    parameters:
+      - $ref: "#/components/parameters/assistantThreadIdPath"
+    put:
+      summary: "Set assistant thread visibility. Requires the current user to have resource permission level `ADMIN`. `PUBLIC` visibility is not allowed for assistant threads. "
+      operationId: "setAssistantThreadVisibility"
+      tags: [ "Assistant" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetVisibilityConfig"
+      responses:
+        "200":
+          description: "OK"
+
   /assistant/threads/{id}/status:
     parameters:
       - $ref: "#/components/parameters/assistantThreadIdPath"
@@ -1266,7 +1335,7 @@ paths:
     post:
       summary: "Create a message"
       operationId: "createAssistantMessage"
-      x-flow-response: true
+      x-codegen-ignore: true
       tags: [ "Assistant" ]
       requestBody:
         required: true
@@ -1319,7 +1388,7 @@ paths:
             #                  - $ref: "#/components/schemas/AssistantMessage"
             text/event-stream:
               schema:
-                $ref: "#/components/schemas/AssistantMessageDelta"
+                $ref: "#/components/schemas/MessageStreamEvent"
   /assistant/threads/{id}/file:
     parameters:
       - $ref: "#/components/parameters/assistantThreadIdPath"
@@ -1563,6 +1632,8 @@ paths:
     get:
       summary: "Retrieve usage report by Periods"
       operationId: "getUsageReportByPeriods"
+      parameters:
+        - $ref: "#/components/parameters/filterByUser"
       responses:
         "200":
           description: "OK"
@@ -1579,6 +1650,8 @@ paths:
     get:
       summary: "Download usage report as CSV"
       operationId: "downloadUsageReport"
+      parameters:
+        - $ref: "#/components/parameters/filterByUser"
       x-stream-response: true
       responses:
         "200":
@@ -1708,7 +1781,7 @@ paths:
       - $ref: "#/components/parameters/organizationIdPath"
     get:
       summary: "Retrieve organization"
-      description: "Retrieve details of a specific organization. Accessible by all users. Public resources will be accessible to all users, while private resources will only be accessible to members of the organization."
+      description: "Retrieve details of a specific organization. Accessible by all users. Public resources will be accessible to all users, while private and unlisted resources will only be accessible to members of the organization."
       operationId: "getOrganization"
       tags: [ "Organizations" ]
       responses:
@@ -1952,6 +2025,15 @@ components:
         type: array
         items:
           $ref: "#/components/schemas/AccountId"
+    filterByUser:
+      name: "user"
+      description: "Filter by user"
+      in: "query"
+      style: "form"
+      explode: false
+      schema:
+        $ref: "#/components/schemas/FilterByUser"
+      required: true
     reportType:
       name: "reportType"
       description: "Synthetic dataset report type"
@@ -2361,11 +2443,21 @@ components:
       description: "The name of a connector."
     ConnectorAccessType:
       type: "string"
-      description: "The access type of a connector. Either `SOURCE` or `DESTINATION`."
+      description: |
+        The access permissions of a connector.
+        
+        - `READ_PROTECTED`:  The connector is restricted to being used solely as a source for training a generator. Direct data access is not permitted, only schema access is available.
+        - `READ_DATA`: This connector allows full read access. As such it can also be used as a source for training a generator.
+        - `WRITE_DATA`: This connector allows full read and write access. As such it can be also used as a source for training a generator, as well as a destination for delivering a synthetic dataset.
+        - `SOURCE`: DEPRECATED - equivalent to READ_PROTECTED
+        - `DESTINATION`: DEPRECATED - equivalent to WRITE_DATA
       enum:
+        - "READ_PROTECTED"
+        - "READ_DATA"
+        - "WRITE_DATA"
         - "SOURCE"
         - "DESTINATION"
-      default: "SOURCE"
+      default: "READ_PROTECTED"
     ConnectorType:
       type: "string"
       description: |
@@ -2382,6 +2474,7 @@ components:
         - `BIGQUERY`: Google BigQuery cloud data warehouse
         - `HIVE`: Apache Hive database
         - `DATABRICKS`: Databricks cloud data platform
+        - `SQLITE`: SQLite database
         - `AZURE_STORAGE`: Azure Blob Storage
         - `GOOGLE_CLOUD_STORAGE`: Google Cloud Storage
         - `S3_STORAGE`: Amazon S3 Storage
@@ -2396,6 +2489,7 @@ components:
         - "BIGQUERY"
         - "HIVE"
         - "DATABRICKS"
+        - "SQLITE"
         - "AZURE_STORAGE"
         - "GOOGLE_CLOUD_STORAGE"
         - "S3_STORAGE"
@@ -2600,6 +2694,10 @@ components:
               database: string
             secrets:
               password: string
+
+          - type: SQLITE
+            config:
+              database: string
           ```
       properties:
         name:
@@ -2629,6 +2727,44 @@ components:
           $ref: "#/components/schemas/ConnectorSecretsParams"
         ssl:
           $ref: "#/components/schemas/ConnectorSslParams"
+    ConnectorReadDataConfig:
+      type: "object"
+      properties:
+        location:
+          description: "Specifies the target within the connector from which to retrieve the data. The format of this parameter varies by connector type."
+          type: "string"
+        limit:
+          description: "The maximum number of rows to return. Return all if not specified."
+          type: "integer"
+          format: "int32"
+          minimum: 1
+        shuffle:
+          description: "Whether to shuffle the results."
+          type: "boolean"
+          default: false
+    ConnectorWriteDataConfig:
+      type: "object"
+      properties:
+        file:
+          description: "Binary Parquet file containing the data to write."
+          type: "string"
+          format: "binary"
+        location:
+          description: "Specifies the target within the connector to which to write the data. The format of this parameter varies by connector type."
+          type: "string"
+        ifExists:
+          description: |
+            The behavior if the target location already exists.
+            
+            - `APPEND`: Append the data to the existing target.
+            - `REPLACE`: Replace the existing target with the new data.
+            - `FAIL`: Fail if the target already exists.
+          type: "string"
+          enum:
+            - "APPEND"
+            - "REPLACE"
+            - "FAIL"
+          default: "FAIL"
 
     # GENERATOR
     GeneratorId:
@@ -2657,12 +2793,31 @@ components:
         totalDatapoints:
           type: "integer"
           format: "int64"
-          description: "The total number of datapoints generated by this generator."
+          description: |
+            The total number of datapoints generated by this generator.
+            **Deprecated:** This field is no longer valid and will always return `-1`. It will be removed in a future version.
+          deprecated: true
         totalComputeTime:
           type: "integer"
           description: |
             The total compute time in seconds used for training this generator.
-            This is the sum of the compute time of all trained tasks.
+            This is the sum of the elapsed compute time of all training tasks.
+        totalCredits:
+          type: "number"
+          format: "double"
+          description: "The amount of credits consumed for training the generator."
+        totalVirtualCPUTime:
+          type: "number"
+          format: "double"
+          description: |
+            The total virtual CPU time in seconds used for training this generator.
+            This is the sum of the elapsed time multiplied by number of allocated virtual CPUs across all training tasks.
+        totalVirtualGPUTime:
+          type: "number"
+          format: "double"
+          description: |
+            The total virtual GPU time in seconds used for training this generator.
+            This is the sum of the elapsed time multiplied by number of allocated virtual GPUs across all training tasks.
         noOfSyntheticDatasets:
           type: "integer"
           description: "Number of synthetic datasets generated by this generator."
@@ -3195,6 +3350,8 @@ components:
             If the job is still, then this is None.
           example: "2024-01-25T12:34:56Z"
           format: "date-time"
+        computeResources:
+          $ref: "#/components/schemas/ComputeResources"
         messages:
           type: "array"
           items:
@@ -3295,16 +3452,31 @@ components:
         totalDatapoints:
           type: "integer"
           format: "int64"
-          description: "The number of datapoints in the synthetic dataset"
-        totalCredits:
-          type: "number"
-          format: "double"
-          description: "The number of credits used for the synthetic dataset"
+          description: |
+            The number of datapoints in the synthetic dataset.
+            **Deprecated:** This field is no longer valid and will always return `-1`. It will be removed in a future version.
+          deprecated: true
         totalComputeTime:
           type: "integer"
           description: |
             The total compute time in seconds used for generating this synthetic dataset.
             This is the sum of the compute time of all trained tasks.
+        totalCredits:
+          type: "number"
+          format: "double"
+          description: "The amount of credits consumed for generating the synthetic dataset."
+        totalVirtualCPUTime:
+          type: "number"
+          format: "double"
+          description: |
+            The total virtual CPU time in seconds used for training this generator.
+            This is the sum of the elapsed time multiplied by number of allocated virtual CPUs across all training tasks.
+        totalVirtualGPUTime:
+          type: "number"
+          format: "double"
+          description: |
+            The total virtual GPU time in seconds used for training this generator.
+            This is the sum of the elapsed time multiplied by number of allocated virtual GPUs across all training tasks.
         noOfLikes:
           type: "integer"
           description: "Number of likes of this synthetic dataset."
@@ -3459,7 +3631,8 @@ components:
     SyntheticTableTotalDatapoints:
       type: "integer"
       description: |
-        The total number of datapoints for that table in the generated synthetic dataset.
+        **Deprecated:** This field is no longer valid and will always return `-1`. It will be removed in a future version.
+      deprecated: true
     SyntheticTable:
       type: "object"
       description: "A synthetic table that will be generated."
@@ -3689,11 +3862,9 @@ components:
         The role of the author of this message
         user - message is written by assistant user
         assistant - message is written by assistant
-        heartbeat - used to avoid connection timeouts in case of long responses ex. python code execution
       enum:
         - "user"
         - "assistant"
-        - "heartbeat"
     AssistantMessageContentType:
       type: "string"
       description: "The type of the message content"
@@ -3718,6 +3889,12 @@ components:
       type: "string"
       minLength: 0
       description: "The partial content of a message"
+    AssistantMessageFinishReason:
+      type: "string"
+      enum:
+        - "stop"
+        - "length"
+        - "tool_calls"
     AssistantMessage:
       type: "object"
       description: "A complete message."
@@ -3740,6 +3917,47 @@ components:
           type: "integer"
           format: "int64"
           description: "The number of tokens consumed by the assistant message."
+    ErrorMessage:
+      type: "object"
+      description: "An error message"
+      properties:
+        message:
+          type: "string"
+          description: "The error message"
+    MessageStreamEvent:
+      description: "An event in the server-sent event stream"
+      oneOf:
+        - $ref: "#/components/schemas/MessageEvent"
+        - $ref: "#/components/schemas/HeartbeatEvent"
+        - $ref: "#/components/schemas/ErrorEvent"
+    MessageEvent:
+      type: "object"
+      description: "A message event containing an assistant message delta"
+      properties:
+        event:
+          type: "string"
+          enum:
+            - "message"
+        data:
+          $ref: "#/components/schemas/AssistantMessageDelta"
+    ErrorEvent:
+      type: "object"
+      description: "An error event containing an error message"
+      properties:
+        event:
+          type: "string"
+          enum:
+            - "error"
+        data:
+          $ref: "#/components/schemas/ErrorMessage"
+    HeartbeatEvent:
+      type: "object"
+      description: "A heartbeat event to keep the connection alive"
+      properties:
+        event:
+          type: "string"
+          enum:
+            - "heartbeat"
     AssistantMessageDelta:
       type: "object"
       description: "A partial message delta generated by streamed model responses."
@@ -3752,9 +3970,8 @@ components:
           $ref: "#/components/schemas/AssistantMessageContentType"
         delta:
           $ref: "#/components/schemas/AssistantMessageContentDelta"
-        isFinished:
-          type: boolean
-          description: "Whether the message as a whole is finished."
+        finishReason:
+          $ref: "#/components/schemas/AssistantMessageFinishReason"
         tokensConsumed:
           type: "integer"
           format: "int64"
@@ -3766,6 +3983,19 @@ components:
           type: "integer"
           format: "int64"
           description: "The total number of tokens consumed by the thread."
+        totalCredits:
+          type: "number"
+          format: "double"
+          description: "The amount of credits consumed for this thread."
+        totalVirtualCPUTime:
+          type: "number"
+          format: "double"
+          description: "The total virtual CPU time in seconds used for the active session of this thread."
+        totalVirtualGPUTime:
+          type: "number"
+          format: "double"
+          description: "The total virtual GPU time in seconds used for the active session of this thread."
+
     # Assistant Configs
     AssistantThreadConfig:
       type: "object"
@@ -4005,11 +4235,13 @@ components:
       enum:
         - "PUBLIC"
         - "PRIVATE"
+        - "UNLISTED"
       description: |
         Indicates the visibility of the resource. 
         
-        - `PUBLIC` resources are visible to all users.
-        - `PRIVATE` resources are visible to the owner. And in case it is owned by an organization, also visible by all members of that organization.
+        - `PUBLIC` - Everyone can access the resource.
+        - `UNLISTED`- Anyone with the direct link can access the resource. No public listings.
+        - `PRIVATE` - Accessible only by the owner. For organizations, all members can access.
     OrganizationInvite:
       type: "object"
       description: "An non-personalized time-boxed invite to join an organization."
@@ -4102,15 +4334,38 @@ components:
         totalDatapoints:
           type: "integer"
           format: "int64"
-          description: "The number of datapoints generated during the reported period"
+          description: |
+            The number of datapoints generated during the reported period.
+            **Deprecated:** This field is no longer valid and will always return `-1`. It will be removed in a future version.
+          deprecated: true
         totalRows:
           type: "integer"
           format: "int64"
-          description: "The number of rows generated during the reported period"
+          description: |
+            The number of rows generated during the reported period
+            **Deprecated:** This field is no longer valid and will always return `-1`. It will be removed in a future version.
         totalCredits:
           type: "number"
           format: "double"
-          description: "The number of credits used during the reported period"
+          description: "The amount of credits used during the reported period"
+        totalVirtualCPUTime:
+          type: "number"
+          format: "double"
+          description: "The total virtual CPU time in seconds used during the reported period"
+        totalVirtualGPUTime:
+          type: "number"
+          format: "double"
+          description: "The total virtual GPU time in seconds used during the reported period"
+
+    FilterByUser:
+      type: "string"
+      description: |
+        Determines whether to filter usage reports for all users or only the current user.
+        - `ALL`: Filter usage reports for all users. Only accessible for SuperAdmins.
+        - `ME`: Filter usage reports for the current user.
+      enum:
+        - "ALL"
+        - "ME"
 
     #####################
     ## mostlyai-engine ##
