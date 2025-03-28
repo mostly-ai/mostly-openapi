@@ -265,6 +265,23 @@ paths:
                 type: "string"
                 format: "binary"
                 description: "Binary Parquet file containing the requested data."
+  /connectors/{id}/delete-data:
+    post:
+      summary: "Delete data from a connector"
+      description: "Delete the data for a specific location from a connector."
+      operationId: "connectorDeleteData"
+      tags: [ "Connectors" ]
+      parameters:
+        - $ref: "#/components/parameters/connectorIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectorDeleteDataConfig"
+      responses:
+        "200":
+          description: "OK"
   /connectors/{id}/write-data:
     post:
       summary: "Write data to a connector"
@@ -977,7 +994,7 @@ paths:
       - $ref: "#/components/parameters/syntheticDatasetIdPath"
       - $ref: "#/components/parameters/syntheticTableIdPath"
     post:
-      summary: "Add sample seed data to synthetic dataset by uploading a data file"
+      summary: "Add sample seed data to synthetic dataset by uploading a data file. Only applicable for subject tables."
       operationId: "uploadSampleSeed"
       tags: [ "Synthetic Tables" ]
       requestBody:
@@ -2283,6 +2300,7 @@ components:
           $ref: "#/components/schemas/UserSettingsAssistantUpdateConfig"
     UserSettingsProfileUpdateConfig:
       type: "object"
+      description: "Configuration for updating a user's profile settings."
       properties:
         name:
           $ref: "#/components/schemas/UserName"
@@ -2294,6 +2312,7 @@ components:
           $ref: "#/components/schemas/UserAvatarBase64"
     UserSettingsAssistantUpdateConfig:
       type: "object"
+      description: "Configuration for updating a user's assistant-related settings."
       properties:
         aboutUserMessage:
           description: "The instruction what the Assistant should know about the user to provide better response"
@@ -2303,9 +2322,11 @@ components:
           type: "string"
     UserUsage:
       type: "object"
+      description: "Usage statistics and limits for the current user."
       properties:
         credits:
           type: "object"
+          description: "The credit balance and limit for the current time period"
           properties:
             current:
               description: "The credit balance for the current time period"
@@ -2325,6 +2346,7 @@ components:
               format: "date-time"
         parallelTrainingJobs:
           type: "object"
+          description: "The number of currently running training jobs and the limit"
           properties:
             current:
               description: "The number of currently running training jobs"
@@ -2334,6 +2356,7 @@ components:
               type: "integer"
         parallelGenerationJobs:
           type: "object"
+          description: "The number of currently running generation jobs and the limit"
           properties:
             current:
               description: "The number of currently running generation jobs."
@@ -2349,6 +2372,7 @@ components:
           $ref: "#/components/schemas/AccountId"
     SetVisibilityConfig:
       type: "object"
+      description: "Configuration for setting the visibility of a resource."
       properties:
         visibility:
           $ref: "#/components/schemas/Visibility"
@@ -2447,8 +2471,8 @@ components:
         The access permissions of a connector.
         
         - `READ_PROTECTED`:  The connector is restricted to being used solely as a source for training a generator. Direct data access is not permitted, only schema access is available.
-        - `READ_DATA`: This connector allows full read access. As such it can also be used as a source for training a generator.
-        - `WRITE_DATA`: This connector allows full read and write access. As such it can be also used as a source for training a generator, as well as a destination for delivering a synthetic dataset.
+        - `READ_DATA`: This connector allows full read access. It can also be used as a source for training a generator.
+        - `WRITE_DATA`: This connector allows full read and write access. It can be also used as a source for training a generator, as well as a destination for delivering a synthetic dataset.
         - `SOURCE`: DEPRECATED - equivalent to READ_PROTECTED
         - `DESTINATION`: DEPRECATED - equivalent to WRITE_DATA
       enum:
@@ -2727,8 +2751,18 @@ components:
           $ref: "#/components/schemas/ConnectorSecretsParams"
         ssl:
           $ref: "#/components/schemas/ConnectorSslParams"
+    ConnectorDeleteDataConfig:
+      type: "object"
+      description: "Configuration for deleting data from a connector."
+      properties:
+        location:
+          description: "Specifies the target within the connector to delete. The format of this parameter varies by connector type."
+          type: "string"
+      required:
+        - "location"
     ConnectorReadDataConfig:
       type: "object"
+      description: "Configuration for reading data from a connector."
       properties:
         location:
           description: "Specifies the target within the connector from which to retrieve the data. The format of this parameter varies by connector type."
@@ -2744,6 +2778,7 @@ components:
           default: false
     ConnectorWriteDataConfig:
       type: "object"
+      description: "Configuration for writing data to a connector."
       properties:
         file:
           description: "Binary Parquet file containing the data to write."
@@ -2764,8 +2799,9 @@ components:
             - "APPEND"
             - "REPLACE"
             - "FAIL"
-          default: "FAIL"
-
+      required:
+        - "location"
+        - "file"
     # GENERATOR
     GeneratorId:
       type: "string"
@@ -2973,6 +3009,7 @@ components:
           $ref: "#/components/schemas/Samples"
     Samples:
       type: "array"
+      description: "An array of sample data objects."
       items:
         type: "object"
         additionalProperties: true
@@ -3037,6 +3074,7 @@ components:
         Note, that only one foreign key relation per table can be a context relation.
     SourceForeignKey:
       type: "object"
+      description: "A foreign key relationship in a source table."
       properties:
         id:
           $ref: "#/components/schemas/SourceForeignKeyId"
@@ -3091,6 +3129,7 @@ components:
           $ref: "#/components/schemas/GeneratorDescription"
     GeneratorImportFromFileConfig:
       type: "object"
+      description: "Configuration for importing a generator from a file."
       properties:
         file:
           type: "string"
@@ -3141,6 +3180,7 @@ components:
           $ref: "#/components/schemas/ModelConfiguration"
     SourceForeignKeyConfig:
       type: "object"
+      description: "Configuration for defining a foreign key relationship in a source table."
       properties:
         column:
           $ref: "#/components/schemas/ForeignKeyColumn"
@@ -3154,6 +3194,7 @@ components:
         - "isContext"
     SourceForeignKeyPatchConfig:
       type: "object"
+      description: "Configuration for updating a foreign key relationship in a source table."
       properties:
         isContext:
           $ref: "#/components/schemas/ForeignKeyIsContext"
@@ -3177,7 +3218,7 @@ components:
           $ref: "#/components/schemas/ModelEncodingType"
     SourceTableAddConfig:
       type: "object"
-      description: "The configuration for adding a new source table to a generator."
+      description: "Configuration for adding a new source table to a generator."
       properties:
         sourceConnectorId:
           $ref: "#/components/schemas/ConnectorId"
@@ -3401,6 +3442,7 @@ components:
         - "FINALIZE_PROBING"
     ProgressValue:
       type: "object"
+      description: "The progress of a job or a step."
       properties:
         value:
           type: "integer"
@@ -3585,11 +3627,13 @@ components:
       description: |
         The base64-encoded string derived from a json line file containing the specified sample seed data.
         This allows conditional live probing via non-python clients.
+        Only applicable for subject tables.
     SyntheticTableSampleSeedData:
       type: "string"
       description: |
         The base64-encoded string derived from a Parquet file containing the specified sample seed data.
         This allows conditional generation as well as live probing via python clients.
+        Only applicable for subject tables.
     SyntheticTableConfiguration:
       type: "object"
       description: "The sample configuration for a synthetic table"
@@ -3663,6 +3707,7 @@ components:
     # Delivery
     SyntheticDatasetDelivery:
       type: "object"
+      description: "Configuration for delivering a synthetic dataset to a destination."
       properties:
         overwriteTables:
           description: |
@@ -3700,6 +3745,7 @@ components:
           $ref: "#/components/schemas/ComputeId"
     SyntheticDatasetPatchConfig:
       type: "object"
+      description: "The configuration for updating a synthetic dataset."
       properties:
         name:
           $ref: "#/components/schemas/SyntheticDatasetName"
@@ -3754,6 +3800,7 @@ components:
       type: "array"
       items:
         type: "object"
+        description: "Configuration parameter for the selected LiteLLM model."
         properties:
           key:
             type: "string"
@@ -3776,6 +3823,7 @@ components:
           $ref: "#/components/schemas/AssistantSettingsIsEnabled"
         liteLlm:
           type: "object"
+          description: "Configuration of the LiteLLM service"
           properties:
             model:
               $ref: "#/components/schemas/AssistantLiteLlmModel"
@@ -3785,6 +3833,7 @@ components:
               $ref: "#/components/schemas/AssistantLiteLlmExtra"
         dataLlm:
           type: "object"
+          description: "Configuration of the DataLLM service"
           properties:
             apiKey:
               $ref: "#/components/schemas/AssistantDataLlmApiKey"
@@ -3802,13 +3851,14 @@ components:
       description: "The name of a assistant thread."
     AssistantThreadSessionStatus:
       type: "string"
+      description: "The current status of an assistant thread session."
       enum:
         - "initializing"
         - "running"
         - "expired"
     AssistantThreadListItem:
       type: "object"
-      description: "Essential assistant thread details for listings."
+      description: "Essential details of an assistant thread for listings."
       properties:
         id:
           $ref: "#/components/schemas/AssistantThreadId"
@@ -3871,26 +3921,33 @@ components:
       enum:
         - "text"
         - "python"
-        - "console"
         - "files"
+    AssistantMessageDeltaContentType:
+      type: "string"
+      description: "The type of the message content"
+      enum:
+        - "text"
+        - "python"
+        - "console"
     AssistantMessageContent:
       type: "string"
       minLength: 0
       description: "The content of a message"
     AssistantMessageFiles:
       type: "array"
-      description: "files apply only to files content type and is a list of filenames"
+      description: "Files associated with an assistant message, applicable only to files content type."
       items:
         type: "object"
         properties:
           name:
             type: "string"
-    AssistantMessageContentDelta:
+    AssistantMessageDeltaContent:
       type: "string"
       minLength: 0
-      description: "The partial content of a message"
+      description: "The partial content of a message in a streaming response."
     AssistantMessageFinishReason:
       type: "string"
+      description: "The reason why the message generation finished."
       enum:
         - "stop"
         - "length"
@@ -3967,9 +4024,9 @@ components:
         role:
           $ref: "#/components/schemas/AssistantMessageRole"
         contentType:
-          $ref: "#/components/schemas/AssistantMessageContentType"
+          $ref: "#/components/schemas/AssistantMessageDeltaContentType"
         delta:
-          $ref: "#/components/schemas/AssistantMessageContentDelta"
+          $ref: "#/components/schemas/AssistantMessageDeltaContent"
         finishReason:
           $ref: "#/components/schemas/AssistantMessageFinishReason"
         tokensConsumed:
@@ -3999,11 +4056,13 @@ components:
     # Assistant Configs
     AssistantThreadConfig:
       type: "object"
+      description: "Configuration for creating a new assistant thread."
       properties:
         name:
           $ref: "#/components/schemas/AssistantThreadName"
     AssistantThreadPatchConfig:
       type: "object"
+      description: "Configuration for updating an assistant thread."
       properties:
         name:
           $ref: "#/components/schemas/AssistantThreadName"
@@ -4060,9 +4119,11 @@ components:
           default: 0
     ComputeConfigParams:
       type: "object"
+      description: "Configuration parameters for a compute resource."
       additionalProperties: { }
     ComputeSecretsParams:
       type: "object"
+      description: "Secret parameters for a compute resource."
       additionalProperties: { }
     ComputeListItem:
       type: "object"
@@ -4113,6 +4174,7 @@ components:
           $ref: "#/components/schemas/ComputeOrderIndex"
     ComputePatchConfig:
       type: "object"
+      description: "The configuration for updating a compute resource."
       properties:
         name:
           $ref: "#/components/schemas/ComputeName"
@@ -4224,7 +4286,7 @@ components:
         - `ADMIN`: The user can manage members and all resources of an organization
     OrganizationMember:
       type: "object"
-      description: "A member of an organization."
+      description: "A member of an organization with their associated role."
       properties:
         user:
           $ref: "#/components/schemas/UserListItem"
@@ -4244,7 +4306,7 @@ components:
         - `PRIVATE` - Accessible only by the owner. For organizations, all members can access.
     OrganizationInvite:
       type: "object"
-      description: "An non-personalized time-boxed invite to join an organization."
+      description: "A non-personalized time-boxed invite to join an organization."
       properties:
         token:
           type: "string"
@@ -4311,6 +4373,7 @@ components:
       description: "The name of an account (either a user or an organization)."
     AccountType:
       type: "string"
+      description: "The type of account, either a user or an organization."
       enum:
         - "USER"
         - "ORGANIZATION"
@@ -4646,7 +4709,9 @@ components:
           minimum: -1.0
           maximum: 1.0
         cosineSimilarityTrainingHoldout:
-          description: "Cosine similarity between training and holdout centroids. Serves as a reference for `cosine_similarity_training_synthetic`."
+          description: | 
+            Cosine similarity between training and holdout centroids. 
+            Serves as a reference for `cosine_similarity_training_synthetic`.
           type: "number"
           format: "double"
           minimum: -1.0
@@ -4658,7 +4723,9 @@ components:
           minimum: 0.0
           maximum: 1.0
         discriminatorAUCTrainingHoldout:
-          description: "Cross-validated AUC of a discriminative model to distinguish between training and holdout samples. Serves as a reference for `discriminator_auc_training_synthetic`."
+          description: | 
+            Cross-validated AUC of a discriminative model to distinguish between training and holdout samples. 
+            Serves as a reference for `discriminator_auc_training_synthetic`.
           type: "number"
           format: "double"
           minimum: 0.0
