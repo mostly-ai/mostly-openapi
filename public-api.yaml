@@ -299,6 +299,31 @@ paths:
       responses:
         "200":
           description: "OK"
+  /connectors/{id}/query:
+    post:
+      summary: "Query data from a connector"
+      description: |
+        Execute a read-only SQL query against the data exposed by a connector.
+        Queries may include statements like SELECT or SHOW, and must not modify data or state.
+        For file-based connectors—including local files and cloud storage buckets (e.g., AWS S3, GCP, Azure Blob)—queries are executed using DuckDB.
+      operationId: "connectorQueryData"
+      tags: [ "Connectors" ]
+      parameters:
+        - $ref: "#/components/parameters/connectorIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectorQueryConfig"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/octet-stream:
+              schema:
+                type: "string"
+                format: "binary"
 
   /connectors/{id}/transfer:
     parameters:
@@ -2376,6 +2401,8 @@ components:
       properties:
         visibility:
           $ref: "#/components/schemas/Visibility"
+      required:
+        - "visibility"
     Notification:
       type: "object"
       description: "A notification for a user."
@@ -2802,6 +2829,14 @@ components:
       required:
         - "location"
         - "file"
+    ConnectorQueryConfig:
+      type: "object"
+      properties:
+        sql:
+          description: "SQL read-only (e.g. SELECT) statement to execute."
+          type: "string"
+      required:
+        - "sql"
     # GENERATOR
     GeneratorId:
       type: "string"
@@ -3258,28 +3293,30 @@ components:
             The maximum number of samples to consider for training.
             If not provided, then all available samples will be taken.
           minimum: 1
-          maximum: 1000000000
         batchSize:
           type: "integer"
           description: |
-            The batch size used for training the model.
+            The physical batch size used for training the model.
             If not provided, batchSize will be chosen automatically.
           minimum: 1
-          maximum: 1000000
+        gradientAccumulationSteps:
+          type: "integer"
+          description: |
+            Steps to accumulate gradients before optimizer update.
+            If not provided, gradientAccumulationSteps will be chosen automatically.
+          minimum: 1
         maxTrainingTime:
           type: "number"
           format: "double"
           description: The maximum number of minutes to train the model.
           default: 14400
           minimum: 0
-          maximum: 1000000
         maxEpochs:
           type: "number"
           format: "double"
           description: The maximum number of epochs to train the model.
           default: 100
           minimum: 0
-          maximum: 1000000
         maxSequenceWindow:
           type: "integer"
           description: |
@@ -3287,7 +3324,6 @@ components:
             Only applicable for TABULAR models.
           default: 100
           minimum: 1
-          maximum: 100000
         enableFlexibleGeneration:
           type: "boolean"
           description: |
@@ -3321,7 +3357,6 @@ components:
           description: |
             If false, then the Model report is not generated.
           default: true
-
     # JOB_PROGRESS
     JobProgress:
       type: "object"
