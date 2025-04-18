@@ -64,6 +64,10 @@ paths:
         - $ref: "#/components/parameters/filterBySearchTerm"
         - $ref: "#/components/parameters/filterByConnectorAccessType"
         - $ref: "#/components/parameters/filterByOwnerId"
+        - $ref: "#/components/parameters/filterByVisibility"
+        - $ref: "#/components/parameters/filterByCreatedFrom"
+        - $ref: "#/components/parameters/filterByCreatedTo"
+        - $ref: "#/components/parameters/sortByOptionsForConnectors"
       responses:
         "200":
           description: "OK"
@@ -379,6 +383,10 @@ paths:
         - $ref: "#/components/parameters/filterByProgressStatus"
         - $ref: "#/components/parameters/filterBySearchTerm"
         - $ref: "#/components/parameters/filterByOwnerId"
+        - $ref: "#/components/parameters/filterByVisibility"
+        - $ref: "#/components/parameters/filterByCreatedFrom"
+        - $ref: "#/components/parameters/filterByCreatedTo"
+        - $ref: "#/components/parameters/sortByOptionsForGenerators"
       responses:
         "200":
           description: "OK"
@@ -881,6 +889,10 @@ paths:
         - $ref: "#/components/parameters/filterByProgressStatus"
         - $ref: "#/components/parameters/filterBySearchTerm"
         - $ref: "#/components/parameters/filterByOwnerId"
+        - $ref: "#/components/parameters/filterByVisibility"
+        - $ref: "#/components/parameters/filterByCreatedFrom"
+        - $ref: "#/components/parameters/filterByCreatedTo"
+        - $ref: "#/components/parameters/sortByOptionsForSyntheticDatasets"
       responses:
         "200":
           description: "OK"
@@ -1251,6 +1263,9 @@ paths:
         - $ref: "#/components/parameters/pageLimit"
         - $ref: "#/components/parameters/filterBySearchTerm"
         - $ref: "#/components/parameters/filterByOwnerId"
+        - $ref: "#/components/parameters/filterByVisibility"
+        - $ref: "#/components/parameters/filterByCreatedFrom"
+        - $ref: "#/components/parameters/filterByCreatedTo"
       responses:
         "200":
           description: "OK"
@@ -2076,6 +2091,64 @@ components:
       schema:
         $ref: "#/components/schemas/FilterByUser"
       required: true
+    filterByVisibility:
+      name: "visibility"
+      description: "Filter by visibility"
+      in: "query"
+      style: "form"
+      explode: false
+      schema:
+        type: "array"
+        items:
+          $ref: "#/components/schemas/Visibility"
+    filterByCreatedFrom:
+      name: "createdFrom"
+      description: "Filter connectors created from this date (inclusive). Format: YYYY-MM-DD."
+      in: "query"
+      style: "form"
+      explode: false
+      schema:
+        type: "string"
+        format: "date"
+    filterByCreatedTo:
+      name: "createdTo"
+      description: "Filter connectors created until this date (inclusive). Format: YYYY-MM-DD."
+      in: "query"
+      style: "form"
+      explode: false
+      schema:
+        type: "string"
+        format: "date"
+    sortByOptionsForGenerators:
+      name: "sortBy"
+      in: "query"
+      required: false
+      style: "form"
+      explode: false
+      schema:
+        type: "array"
+        items:
+          $ref: "#/components/schemas/GeneratorSortField"
+    sortByOptionsForSyntheticDatasets:
+      name: "sortBy"
+      in: "query"
+      required: false
+      style: "form"
+      explode: false
+      schema:
+        type: "array"
+        items:
+          $ref: "#/components/schemas/SyntheticDatasetSortField"
+    sortByOptionsForConnectors:
+      name: "sortBy"
+      in: "query"
+      required: false
+      style: "form"
+      explode: false
+      schema:
+        type: "array"
+        items:
+          $ref: "#/components/schemas/ConnectorSortField"
     reportType:
       name: "reportType"
       description: "Synthetic dataset report type"
@@ -2837,6 +2910,12 @@ components:
           type: "string"
       required:
         - "sql"
+    ConnectorSortField:
+      type: "string"
+      enum:
+        - "RECENCY"
+        - "NO_OF_GENERATORS"
+
     # GENERATOR
     GeneratorId:
       type: "string"
@@ -3270,7 +3349,12 @@ components:
       required:
         - "sourceConnectorId"
         - "location"
-
+    GeneratorSortField:
+      type: "string"
+      enum:
+        - "RECENCY"
+        - "NO_OF_LIKES"
+        - "NO_OF_SYNTHETIC_DATASETS"
     # MODEL
     ModelId:
       type: "string"
@@ -3557,6 +3641,9 @@ components:
         noOfLikes:
           type: "integer"
           description: "Number of likes of this synthetic dataset."
+        noOfDownloads:
+          type: "integer"
+          description: "Number of downloads of this synthetic dataset."
     SyntheticDatasetListItem:
       type: "object"
       description: "Essential synthetic dataset details for listings."
@@ -3816,7 +3903,12 @@ components:
           $ref: "#/components/schemas/SyntheticTableConfiguration"
       required:
         - "name"
-
+    SyntheticDatasetSortField:
+      type: "string"
+      enum:
+        - "RECENCY"
+        - "NO_OF_LIKES"
+        - "NO_OF_DOWNLOADS"
     # ASSISTANT
     AssistantSettingsIsEnabled:
       type: "boolean"
@@ -4723,8 +4815,8 @@ components:
         
         1. **Cosine Similarity**: The cosine similarity between the centroids of synthetic and training samples.
         2. **Discriminator AUC**: The AUC of a discriminative model to distinguish between synthetic and training samples.
-        
-        The SentenceTransformer model [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) is
+
+        The Model2Vec model [potion-base-8M](https://huggingface.co/minishlab/potion-base-8M) is
         used to compute the embeddings of a string-ified representation of individual records. In case of sequential data
         the records, that belong to the same group, are being concatenated. We then calculate the cosine similarity
         between the centroids of the provided datasets within the embedding space.
@@ -4796,6 +4888,12 @@ components:
           format: "double"
           minimum: 0.0
           maximum: 1.0
+        imsTrnHol:
+          description: "Share of training samples that are identical to a holdout sample. Serves as a reference for `ims_training`."
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
         dcrTraining:
           description: "Average L2 nearest-neighbor distance between synthetic and training samples."
           type: "number"
@@ -4803,6 +4901,11 @@ components:
           minimum: 0.0
         dcrHoldout:
           description: "Average L2 nearest-neighbor distance between synthetic and holdout samples. Serves as a reference for `dcr_training`."
+          type: "number"
+          format: "double"
+          minimum: 0.0
+        dcrTrnHol:
+          description: "Average L2 nearest-neighbor distance between training and holdout samples. Serves as a reference for `dcr_training`."
           type: "number"
           format: "double"
           minimum: 0.0
