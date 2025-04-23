@@ -1369,6 +1369,10 @@ paths:
                 properties:
                   status:
                     $ref: "#/components/schemas/AssistantThreadSessionStatus"
+                  totalVirtualCPUTime:
+                    type: "number"
+                    format: "double"
+                    description: "Total virtual CPU time"
   /assistant/threads/{id}/export:
     parameters:
       - $ref: "#/components/parameters/assistantThreadIdPath"
@@ -4867,11 +4871,12 @@ components:
         an optimal sensitivity of this privacy assessment it is recommended to use a 50/50 split between training and
         holdout data, and then generate synthetic data of the same size.
         
-        The embeddings of these samples are then computed, and the L2 nearest neighbor distances are calculated for each
+        The embeddings of these samples are then computed, and the nearest neighbor distances are calculated for each
         synthetic sample to the training and holdout samples. Based on these nearest neighbor distances the following
         metrics are calculated:
           - Identical Match Share (IMS): The share of synthetic samples that are identical to a training or holdout sample.
           - Distance to Closest Record (DCR): The average distance of synthetic to training or holdout samples.
+          - Nearest Neighbor Distance Ratio (NNDR): The 10-th smallest ratio of the distance to nearest and second nearest neighbor.
         
         For privacy-safe synthetic data we expect to see about as many identical matches, and about the same distances
         for synthetic samples to training, as we see for synthetic samples to holdout.
@@ -4895,17 +4900,17 @@ components:
           minimum: 0.0
           maximum: 1.0
         dcrTraining:
-          description: "Average L2 nearest-neighbor distance between synthetic and training samples."
+          description: "Average nearest-neighbor distance between synthetic and training samples."
           type: "number"
           format: "double"
           minimum: 0.0
         dcrHoldout:
-          description: "Average L2 nearest-neighbor distance between synthetic and holdout samples. Serves as a reference for `dcr_training`."
+          description: "Average nearest-neighbor distance between synthetic and holdout samples. Serves as a reference for `dcr_training`."
           type: "number"
           format: "double"
           minimum: 0.0
         dcrTrnHol:
-          description: "Average L2 nearest-neighbor distance between training and holdout samples. Serves as a reference for `dcr_training`."
+          description: "Average nearest-neighbor distance between training and holdout samples. Serves as a reference for `dcr_training`."
           type: "number"
           format: "double"
           minimum: 0.0
@@ -4915,6 +4920,21 @@ components:
           format: "double"
           minimum: 0.0
           maximum: 1.0
+        nndrTraining:
+          description: "10th smallest nearest-neighbor distance ratio between synthetic and training samples."
+          type: "number"
+          format: "double"
+          minimum: 0.0
+        nndrHoldout:
+          description: "10th smallest nearest-neighbor distance ratio between synthetic and holdout samples."
+          type: "number"
+          format: "double"
+          minimum: 0.0
+        nndrTrnHol:
+          description: "10th smallest nearest-neighbor distance ratio between training and holdout samples."
+          type: "number"
+          format: "double"
+          minimum: 0.0
 
 security:
   - ApiKeyAuth: [ ]
