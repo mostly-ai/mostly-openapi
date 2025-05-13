@@ -1369,10 +1369,6 @@ paths:
                 properties:
                   status:
                     $ref: "#/components/schemas/AssistantThreadSessionStatus"
-                  totalVirtualCPUTime:
-                    type: "number"
-                    format: "double"
-                    description: "Total virtual CPU time"
   /assistant/threads/{id}/export:
     parameters:
       - $ref: "#/components/parameters/assistantThreadIdPath"
@@ -2070,7 +2066,7 @@ components:
           $ref: "#/components/schemas/ProgressStatus"
     filterBySearchTerm:
       name: "searchTerm"
-      description: "Filter by search term"
+      description: "Filter by search term in the name or description."
       in: "query"
       style: "form"
       explode: false
@@ -2097,7 +2093,7 @@ components:
       required: true
     filterByVisibility:
       name: "visibility"
-      description: "Filter by visibility"
+      description: "Filter by visibility."
       in: "query"
       style: "form"
       explode: false
@@ -2107,7 +2103,7 @@ components:
           $ref: "#/components/schemas/Visibility"
     filterByCreatedFrom:
       name: "createdFrom"
-      description: "Filter connectors created from this date (inclusive). Format: YYYY-MM-DD."
+      description: "Filter by creation date, not older than this date. Format: YYYY-MM-DD."
       in: "query"
       style: "form"
       explode: false
@@ -2116,7 +2112,7 @@ components:
         format: "date"
     filterByCreatedTo:
       name: "createdTo"
-      description: "Filter connectors created until this date (inclusive). Format: YYYY-MM-DD."
+      description: "Filter by creation date, not younger than this date. Format: YYYY-MM-DD."
       in: "query"
       style: "form"
       explode: false
@@ -4679,23 +4675,9 @@ components:
           description: |
             Specifies the maximum allowable epsilon value. If the training process exceeds this threshold, it will be terminated early. Only model checkpoints with epsilon values below this limit will be retained. 
             If not provided, the training will proceed without early termination based on epsilon constraints.
+          default: 10.0
           minimum: 0.0
-          maximum: 10000.0
-        noiseMultiplier:
-          type: "number"
-          format: "double"
-          description: |
-            The ratio of the standard deviation of the Gaussian noise to the L2-sensitivity of the function to which the noise is added (How much noise to add).
-          default: 1.5
-          minimum: 0.0
-          maximum: 10000.0
-        maxGradNorm:
-          type: "number"
-          format: "double"
-          description: |
-            The maximum norm of the per-sample gradients for training the model with differential privacy.
-          default: 1.0
-          minimum: 0.0
+          exclusiveMinimum: true
           maximum: 10000.0
         delta:
           type: "number"
@@ -4703,9 +4685,37 @@ components:
           description: |
             The delta value for differential privacy. It is the probability of the privacy guarantee not holding. 
             The smaller the delta, the more confident you can be that the privacy guarantee holds.
+            This delta will be equally distributed between the analysis and the training phase.
           default: 1e-5
           minimum: 0.0
+          exclusiveMinimum: true
           maximum: 1.0
+        noiseMultiplier:
+          type: "number"
+          format: "double"
+          description: |
+            Determines how much noise while training the model with differential privacy. This is the ratio of the standard deviation of the Gaussian noise to the L2-sensitivity of the function to which the noise is added.
+          default: 1.5
+          minimum: 0.0
+          maximum: 10000.0
+        maxGradNorm:
+          type: "number"
+          format: "double"
+          description: |
+            Determines the maximum impact of a single sample on updating the model weights during training with differential privacy. This is the maximum norm of the per-sample gradients.
+          default: 1.0
+          minimum: 0.0
+          maximum: 10000.0
+        valueProtectionEpsilon:
+          type: "number"
+          format: "double"
+          description: |
+            The DP epsilon of the privacy budget for determining the value ranges, which are gathered prior to the model training during the analysis step. Only applicable if value protection is True.
+            Privacy budget will be equally distributed between the columns. For categorical we calculate noisy histograms and use a noisy threshold. For numeric and datetime we calculate bounds based on noisy histograms.
+          default: 1.0
+          minimum: 0.0
+          exclusiveMinimum: true
+          maximum: 10000.0
 
     #################
     ## mostlyai-qa ##
@@ -4721,7 +4731,7 @@ components:
         2. **Similarity**: Metrics regarding the similarity of the full joint distributions of samples within an embedding
         space.
         3. **Distances**: Metrics regarding the nearest neighbor distances between training, holdout, and synthetic samples
-        in an embedding space. Useful for assessing the novelty / privacy of synthetic data.
+        in an numeric encoding space. Useful for assessing the novelty / privacy of synthetic data.
         
         The quality of synthetic data is assessed by comparing these metrics to the same metrics of a holdout dataset.
         The holdout dataset is a subset of the original training data, that was not used for training the synthetic data
@@ -4738,20 +4748,21 @@ components:
       description: |
         Metrics regarding the accuracy of synthetic data, measured as the closeness of discretized lower dimensional
         marginal distributions.
-        
+    
         1. **Univariate Accuracy**: The accuracy of the univariate distributions for all target columns.
         2. **Bivariate Accuracy**: The accuracy of all pair-wise distributions for target columns, as well as for target
         columns with respect to the context columns.
-        3. **Coherence Accuracy**: The accuracy of the auto-correlation for all target columns.
-        
+        3. **Trivariate Accuracy**: The accuracy of all three-way distributions for target columns.
+        4. **Coherence Accuracy**: The accuracy of the auto-correlation for all target columns.
+    
         Accuracy is defined as 100% - [Total Variation Distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures) (TVD),
         whereas TVD is half the sum of the absolute differences of the relative frequencies of the corresponding
         distributions.
-        
+    
         These accuracies are calculated for all discretized univariate, and bivariate distributions. In case of sequential
         data, also for all coherence distributions. Overall metrics are then calculated as the average across these
         accuracies.
-        
+    
         All metrics can be compared against a theoretical maximum accuracy, which is calculated for a same-sized holdout.
         The accuracy metrics shall be as close as possible to the theoretical maximum, but not significantly higher, as
         this would indicate overfitting.
@@ -4773,6 +4784,13 @@ components:
         bivariate:
           description: |
             Average accuracy of discretized bivariate distributions.
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        trivariate:
+          description: |
+            Average accuracy of discretized trivariate distributions.
           type: "number"
           format: "double"
           minimum: 0.0
@@ -4801,6 +4819,13 @@ components:
         bivariateMax:
           description: |
             Expected bivariate accuracy of a same-sized holdout. Serves as a reference for `bivariate`.
+          type: "number"
+          format: "double"
+          minimum: 0.0
+          maximum: 1.0
+        trivariateMax:
+          description: |
+            Expected trivariate accuracy of a same-sized holdout. Serves as a reference for `trivariate`.
           type: "number"
           format: "double"
           minimum: 0.0
@@ -4864,20 +4889,20 @@ components:
     Distances:
       type: "object"
       description: |
-        Metrics regarding the nearest neighbor distances between training, holdout, and synthetic samples in an embedding
-        space. Useful for assessing the novelty / privacy of synthetic data.
-        
+        Metrics regarding the nearest neighbor distances between training, holdout, and synthetic samples in an numerically
+        encoded space. Useful for assessing the novelty / privacy of synthetic data.
+    
         The provided data is first down-sampled, so that the number of samples match across all datasets. Note, that for
         an optimal sensitivity of this privacy assessment it is recommended to use a 50/50 split between training and
         holdout data, and then generate synthetic data of the same size.
-        
-        The embeddings of these samples are then computed, and the nearest neighbor distances are calculated for each
+    
+        The numerical encodings of these samples are then computed, and the nearest neighbor distances are calculated for each
         synthetic sample to the training and holdout samples. Based on these nearest neighbor distances the following
         metrics are calculated:
-          - Identical Match Share (IMS): The share of synthetic samples that are identical to a training or holdout sample.
-          - Distance to Closest Record (DCR): The average distance of synthetic to training or holdout samples.
-          - Nearest Neighbor Distance Ratio (NNDR): The 10-th smallest ratio of the distance to nearest and second nearest neighbor.
-        
+        - Identical Match Share (IMS): The share of synthetic samples that are identical to a training or holdout sample.
+        - Distance to Closest Record (DCR): The average distance of synthetic to training or holdout samples.
+        - Nearest Neighbor Distance Ratio (NNDR): The 10-th smallest ratio of the distance to nearest and second nearest neighbor.
+    
         For privacy-safe synthetic data we expect to see about as many identical matches, and about the same distances
         for synthetic samples to training, as we see for synthetic samples to holdout.
       properties:
