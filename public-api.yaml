@@ -368,6 +368,26 @@ paths:
         "200":
           description: "OK"
 
+  /connectors/{id}/like:
+    parameters:
+      - $ref: "#/components/parameters/connectorIdPath"
+    post:
+      summary: "Like a connector"
+      description: "Like the provided connector."
+      operationId: "likeConnector"
+      tags: [ "Likes" ]
+      responses:
+        "200":
+          description: "OK"
+    delete:
+      summary: "Unlike a connector"
+      description: "Unlike the provided connector."
+      operationId: "unLikeConnector"
+      tags: [ "Likes" ]
+      responses:
+        "200":
+          description: "OK"
+
   # GENERATORS
   /generators:
     get:
@@ -2565,6 +2585,9 @@ components:
     ConnectorName:
       type: "string"
       description: "The name of a connector."
+    ConnectorDescription:
+      type: "string"
+      description: "The description of a connector."
     ConnectorAccessType:
       type: "string"
       description: |
@@ -2645,6 +2668,9 @@ components:
         noOfGenerators:
           type: "integer"
           description: "Number of generators using this connector."
+        noOfLikes:
+          type: "integer"
+          description: "Number of likes of this connector."
     ConnectorListItem:
       type: "object"
       description: "Essential connector details for listings."
@@ -2653,6 +2679,8 @@ components:
           $ref: "#/components/schemas/ConnectorId"
         name:
           $ref: "#/components/schemas/ConnectorName"
+        description:
+          $ref: "#/components/schemas/ConnectorDescription"
         type:
           $ref: "#/components/schemas/ConnectorType"
         accessType:
@@ -2673,6 +2701,8 @@ components:
           $ref: "#/components/schemas/ConnectorId"
         name:
           $ref: "#/components/schemas/ConnectorName"
+        description:
+          $ref: "#/components/schemas/ConnectorDescription"
         type:
           $ref: "#/components/schemas/ConnectorType"
         accessType:
@@ -2826,6 +2856,8 @@ components:
       properties:
         name:
           $ref: "#/components/schemas/ConnectorName"
+        description:
+          $ref: "#/components/schemas/ConnectorDescription"
         type:
           $ref: "#/components/schemas/ConnectorType"
         accessType:
@@ -2845,6 +2877,8 @@ components:
       properties:
         name:
           $ref: "#/components/schemas/ConnectorName"
+        description:
+          $ref: "#/components/schemas/ConnectorDescription"
         config:
           $ref: "#/components/schemas/ConnectorConfigParams"
         secrets:
@@ -2915,6 +2949,7 @@ components:
       enum:
         - "RECENCY"
         - "NO_OF_GENERATORS"
+        - "NO_OF_LIKES"
 
     # GENERATOR
     GeneratorId:
