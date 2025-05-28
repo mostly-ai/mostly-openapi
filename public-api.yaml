@@ -2186,7 +2186,7 @@ components:
       required: true
     shortLivedFileToken:
       name: "slft"
-      description: "A valid short-lived file token (`slft`) for accessing resource artefacts. See `metadata.shortLivedFileToken`."
+      description: "A valid short-lived file token (`slft`) for accessing resource artifacts. See `metadata.shortLivedFileToken`."
       in: "query"
       style: "form"
       schema:
@@ -2571,7 +2571,7 @@ components:
         shortLivedFileToken:
           type: "string"
           description: |
-            An auto-generated short-lived file token (`slft`) for accessing resource artefacts.
+            An auto-generated short-lived file token (`slft`) for accessing resource artifacts.
             The token is always restricted to a single resource, only valid for 60 minutes, and 
             only accepted by API endpoints that allow to download single files.
     PaginatedTotalCount:
@@ -2879,6 +2879,8 @@ components:
           $ref: "#/components/schemas/ConnectorName"
         description:
           $ref: "#/components/schemas/ConnectorDescription"
+        accessType:
+          $ref: "#/components/schemas/ConnectorAccessType"
         config:
           $ref: "#/components/schemas/ConnectorConfigParams"
         secrets:
@@ -3009,6 +3011,12 @@ components:
         noOfLikes:
           type: "integer"
           description: "Number of likes of this generator."
+    GeneratorRandomState:
+      type: "integer"
+      description: |
+        Seed for the random number generators. If None, the random number generator is initialized randomly, yielding different results for every run. 
+        Setting it to a specific integer ensures reproducible results across runs.
+        Useful when consistent results are desired, e.g. for testing or debugging.
     GeneratorListItem:
       type: "object"
       description: "Essential generator details for listings."
@@ -3060,6 +3068,8 @@ components:
           description: "The tables of this generator"
           items:
             $ref: "#/components/schemas/SourceTable"
+        randomState:
+          $ref: "#/components/schemas/GeneratorRandomState"
       required:
         - "id"
         - "trainingStatus"
@@ -3247,6 +3257,8 @@ components:
           $ref: "#/components/schemas/GeneratorName"
         description:
           $ref: "#/components/schemas/GeneratorDescription"
+        randomState:
+          $ref: "#/components/schemas/GeneratorRandomState"
         tables:
           type: "array"
           description: "The tables of a generator"
@@ -3276,6 +3288,8 @@ components:
           $ref: "#/components/schemas/GeneratorName"
         description:
           $ref: "#/components/schemas/GeneratorDescription"
+        randomState:
+          $ref: "#/components/schemas/GeneratorRandomState"
     GeneratorImportFromFileConfig:
       type: "object"
       description: "Configuration for importing a generator from a file."
@@ -3610,7 +3624,7 @@ components:
         The status of a job or a step.
         
         - `NEW`: The job/step is being configured, and has not started yet
-        - `CONTINUE`: The job/step is being configured, but has existing artefacts
+        - `CONTINUE`: The job/step is being configured, but has existing artifacts
         - `ON_HOLD`: The job/step has been started, but is kept on hold
         - `QUEUED`: The job/step has been started, and is awaiting for resources to execute
         - `IN_PROGRESS`: The job/step is currently running
@@ -3679,6 +3693,12 @@ components:
         noOfDownloads:
           type: "integer"
           description: "Number of downloads of this synthetic dataset."
+    SyntheticDatasetRandomState:
+      type: "integer"
+      description: |
+        Seed for the random number generators. If None, the random number generator is initialized randomly, yielding different results for every run.
+        Setting it to a specific integer ensures reproducible results across runs.
+        Useful when consistent results are desired, e.g. for testing or debugging.
     SyntheticDatasetListItem:
       type: "object"
       description: "Essential synthetic dataset details for listings."
@@ -3734,6 +3754,8 @@ components:
           $ref: "#/components/schemas/SyntheticDatasetUsage"
         compute:
           $ref: "#/components/schemas/ComputeId"
+        randomState:
+          $ref: "#/components/schemas/SyntheticDatasetRandomState"
       required:
         - "id"
         - "generationStatus"
@@ -3892,6 +3914,8 @@ components:
           $ref: "#/components/schemas/SyntheticDatasetName"
         description:
           $ref: "#/components/schemas/SyntheticDatasetDescription"
+        randomState:
+          $ref: "#/components/schemas/SyntheticDatasetRandomState"
         tables:
           type: "array"
           items:
@@ -3912,6 +3936,8 @@ components:
           $ref: "#/components/schemas/SyntheticDatasetDelivery"
         compute:
           $ref: "#/components/schemas/ComputeId"
+        randomState:
+          $ref: "#/components/schemas/SyntheticDatasetRandomState"
     SyntheticTablePatchConfig:
       type: "object"
       description: "The configuration for updating a synthetic table."
@@ -3924,6 +3950,8 @@ components:
       properties:
         generatorId:
           $ref: "#/components/schemas/GeneratorId"
+        randomState:
+          $ref: "#/components/schemas/SyntheticDatasetRandomState"
         tables:
           type: "array"
           items:
@@ -3968,9 +3996,6 @@ components:
             type: "string"
           value:
             type: "string"
-    AssistantDataLlmApiKey:
-      type: "string"
-      description: "The API key for the DataLLM service. See https://data.mostly.ai."
     AssistantSystemInstructions:
       description: "The system instructions of the assistant"
       type: "string"
@@ -3993,12 +4018,6 @@ components:
               $ref: "#/components/schemas/AssistantLiteLlmApiKey"
             extra:
               $ref: "#/components/schemas/AssistantLiteLlmExtra"
-        dataLlm:
-          type: "object"
-          description: "Configuration of the DataLLM service"
-          properties:
-            apiKey:
-              $ref: "#/components/schemas/AssistantDataLlmApiKey"
         systemInstructions:
           $ref: "#/components/schemas/AssistantSystemInstructions"
         customInstructions:
@@ -4049,16 +4068,29 @@ components:
           description: |
             List of all existing messages, excluding any system message.
             Example:
-              What's the square root of 9?                      role: user        type: text
-              ok, I will write some python                      role: assistant   type: text
-              content: r = math.sqrt(9)\nr; result=3            role: assistant   type: python
-              The answer is 3!                                  role: assistant   type: text
-              Plot me a random barplot                          role: user        type: text
-              ... plt.savefig() ...                              role: assistant   type: python
-              Here is ![img]() ...                              role: assistant   type: text
-              Write me a random file                             role: user        type: text
-              ... .to_csv() ...                                 role: assistant   type: python
-              Here is [file]() ...                               role: assistant   type: text
+              content                                result           role              contentType
+              What's the square root of 9?                            user              text | files
+              ok, I will write some python                            assistant         text
+              r = math.sqrt(9); r                    3                assistant         python
+              The answer is 3!                                        assistant         text
+              Plot me 2 barplots                                      user              text
+              ... plt.savefig(fn); fn ...            '/mnt/...'       assistant         python
+              /mnt/data/barplot1.png                                  assistant         artifact/image      NEW
+              /mnt/data/barplot2.png                                  assistant         artifact/image      NEW
+              Here you go.                                            assistant         text
+              Write me a random CSV file                              user              text
+              ... .to_csv(fn); fn ...                '/mnt/...'       assistant         python
+              /mnt/data/x/data.csv                                    assistant         artifact/data       NEW
+              Here you go.                                            assistant         text
+              Write me a some PDF file                                user              text
+              ... .to_pdf(fn); fn ...                '/mnt/...'       assistant         python
+              /mnt/data/some.pdf                                      assistant         artifact/file       NEW
+              Here you go.                                            assistant         text
+              pd.__version__                         2.2.5            user              python
+              It's pandas version 2.2.5.                              assistant         text
+              Fetch me the census generator                           user              text
+              g = ...; g                             '348...'         assistant         python
+              348ce156-7f81-4296-a2a3-5a4b0ec7c08e                    assistant         artifact/generator  NEW
           items:
             $ref: "#/components/schemas/AssistantMessage"
         usage:
@@ -4083,7 +4115,15 @@ components:
       enum:
         - "text"
         - "python"
+        #        Files uploaded by user
         - "files"
+        - "artifact/image"
+        - "artifact/data"
+        #        Files produced by broker
+        - "artifact/file"
+        - "artifact/generator"
+        - "artifact/synthetic-dataset"
+        - "artifact/connector"
     AssistantMessageDeltaContentType:
       type: "string"
       description: "The type of the message content"
@@ -4091,10 +4131,19 @@ components:
         - "text"
         - "python"
         - "console"
+        - "artifact/image"
+        - "artifact/data"
+        - "artifact/file"
+        - "artifact/generator"
+        - "artifact/synthetic-dataset"
+        - "artifact/connector"
     AssistantMessageContent:
       type: "string"
       minLength: 0
-      description: "The content of a message"
+      description: |
+        The content of a message. 
+        For file-based artifacts, this contains the filename and nothing else.
+        For resource-based artifacts, this contains the UUID and nothing else.
     AssistantMessageFiles:
       type: "array"
       description: "Files associated with an assistant message, applicable only to files content type."
@@ -4131,7 +4180,6 @@ components:
           description: "result applies only to python content type and is a result of python execution - the same console content type when streaming deltas"
         files:
           $ref: "#/components/schemas/AssistantMessageFiles"
-
         tokensConsumed:
           type: "integer"
           format: "int64"
@@ -4900,7 +4948,7 @@ components:
           minimum: -1.0
           maximum: 1.0
         cosineSimilarityTrainingHoldout:
-          description: | 
+          description: |
             Cosine similarity between training and holdout centroids. 
             Serves as a reference for `cosine_similarity_training_synthetic`.
           type: "number"
@@ -4914,7 +4962,7 @@ components:
           minimum: 0.0
           maximum: 1.0
         discriminatorAUCTrainingHoldout:
-          description: | 
+          description: |
             Cross-validated AUC of a discriminative model to distinguish between training and holdout samples. 
             Serves as a reference for `discriminator_auc_training_synthetic`.
           type: "number"
