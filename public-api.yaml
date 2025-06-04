@@ -53,8 +53,8 @@ paths:
     get:
       summary: "List connectors"
       description: |
-        Paginate through all connectors the user has access to. 
-        Connectors with `UNLISTED` visibility will only be visible to their owners or to members of the owning organization.  
+        Paginate through all connectors the user has access to.
+        Connectors with `UNLISTED` visibility will only be visible to their owners or to members of the owning organization.
         Only connectors that are not of type `FILE_UPLOAD` will be returned.
       operationId: "listConnectors"
       tags: [ "Connectors" ]
@@ -393,7 +393,7 @@ paths:
     get:
       summary: "List generators"
       description: |
-        Paginate through all generators the user has access to. 
+        Paginate through all generators the user has access to.
         Generators with `UNLISTED` visibility will only be visible to their owners or to members of the owning organization.
       operationId: "listGenerators"
       tags: [ "Generators" ]
@@ -519,11 +519,11 @@ paths:
     post:
       summary: "Clone generator"
       description: |
-        Create a new generator, re-using existing data and model configurations. By setting trainingStatus 
+        Create a new generator, re-using existing data and model configurations. By setting trainingStatus
         to CONTINUE, the model weights are copied as well, and training will continue from there. Note, that
-        in that case, only the training parameters (maxSampleSize, maxEpochs, batchSize, compute, etc.) of 
-        the model configuration can still be modified. Other configurations, like columns, model, and 
-        valueProtection cannot be changed anymore, as these would break compatibility with the existing model 
+        in that case, only the training parameters (maxSampleSize, maxEpochs, batchSize, compute, etc.) of
+        the model configuration can still be modified. Other configurations, like columns, model, and
+        valueProtection cannot be changed anymore, as these would break compatibility with the existing model
         weights.
       operationId: "cloneGenerator"
       tags: [ "Generators" ]
@@ -756,7 +756,7 @@ paths:
             schema:
               $ref: "#/components/schemas/SourceForeignKeyConfig"
       responses:
-        200:
+        "200":
           description: OK
           content:
             application/json:
@@ -779,7 +779,7 @@ paths:
             schema:
               $ref: "#/components/schemas/SourceForeignKeyPatchConfig"
       responses:
-        200:
+        "200":
           description: OK
           content:
             application/json:
@@ -790,7 +790,7 @@ paths:
       operationId: deleteSourceForeignKey
       tags: [ "Source Foreign Keys" ]
       responses:
-        200:
+        "200":
           description: OK
   /generators/{id}/training:
     parameters:
@@ -899,7 +899,7 @@ paths:
     get:
       summary: "List synthetic datasets"
       description: |
-        Paginate through all synthetic datasets the user has access to. 
+        Paginate through all synthetic datasets the user has access to.
         Synthetic datasets with `UNLISTED` visibility will only be visible to their owners or to members of the owning organization.
       operationId: "listSyntheticDatasets"
       tags: [ "Synthetic Datasets" ]
@@ -1274,7 +1274,7 @@ paths:
     get:
       summary: "List assistant threads"
       description: |
-        Paginate through all assistant threads the user has access to. 
+        Paginate through all assistant threads the user has access to.
         Threads with `UNLISTED` visibility will only be visible to their owners or to members of the owning organization.
       operationId: "listAssistantThreads"
       tags: [ "Assistant" ]
@@ -1424,9 +1424,9 @@ paths:
         "200":
           description: |
             The newly created messages (excluding the user message)
-            
+
             if stream=True then return stream of sever-sent events of type AssistantMessageDelta:
-            
+
               data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'ok,', finishReason: None}
               data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'I', finishReason: None}
               data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'will,', finishReason: None}
@@ -1440,7 +1440,7 @@ paths:
               data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: None, finishReason: 'tool_calls'}
 
               data: {id: 'def3', role: 'tool', 'contentType': 'text', delta: '3', finishReason: 'stop'}
-            
+
               data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'The', finishReason: None}
               data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'answer', finishReason: None}
               data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'is', finishReason: None}
@@ -1668,7 +1668,7 @@ paths:
       operationId: "patchCompute"
       description: |
         Update a compute. Only accessible for SuperAdmins.
-        
+
         For the structure of the config and secrets, see the CREATE method.
       tags: [ "Computes" ]
       requestBody:
@@ -1941,7 +1941,7 @@ paths:
             schema:
               $ref: "#/components/schemas/MemberRolePatchConfig"
       responses:
-        200:
+        "200":
           description: "OK"
 
   /organizations/{id}/invite:
@@ -1993,7 +1993,7 @@ paths:
       summary: WebSocket Connection
       description: Establish a WebSocket connection.
       responses:
-        101:
+        "101":
           description: Switching Protocols
       x-websocket:
         summary: WebSocket Connection
@@ -2572,7 +2572,7 @@ components:
           type: "string"
           description: |
             An auto-generated short-lived file token (`slft`) for accessing resource artifacts.
-            The token is always restricted to a single resource, only valid for 60 minutes, and 
+            The token is always restricted to a single resource, only valid for 60 minutes, and
             only accepted by API endpoints that allow to download single files.
     PaginatedTotalCount:
       type: "integer"
@@ -2592,7 +2592,7 @@ components:
       type: "string"
       description: |
         The access permissions of a connector.
-        
+
         - `READ_PROTECTED`:  The connector is restricted to being used solely as a source for training a generator. Direct data access is not permitted, only schema access is available.
         - `READ_DATA`: This connector allows full read access. It can also be used as a source for training a generator.
         - `WRITE_DATA`: This connector allows full read and write access. It can be also used as a source for training a generator, as well as a destination for delivering a synthetic dataset.
@@ -2608,10 +2608,10 @@ components:
     ConnectorType:
       type: "string"
       description: |
-        The type of a connector. 
-        
+        The type of a connector.
+
         The type determines the structure of the config, secrets and ssl parameters.
-        
+
         - `MYSQL`: MySQL database
         - `POSTGRES`: PostgreSQL database
         - `MSSQL`: Microsoft SQL Server database
@@ -2755,7 +2755,7 @@ components:
             secrets:
               secretKey: string
             ssl:
-              caCertificate: base64-encoded string              
+              caCertificate: base64-encoded string
           ```
         - Database:
           ```yaml
@@ -2782,7 +2782,7 @@ components:
               username: string (required for regular auth)
               kerberosEnabled: boolean, default: false
               kerberosServicePrincipal: string (required if kerberosEnabled)
-              kerberosClientPrincipal: string (optional if kerberosEnabled)              
+              kerberosClientPrincipal: string (optional if kerberosEnabled)
               kerberosKrb5Conf: string (required if kerberosEnabled)
               sslEnabled: boolean, default: false
             secrets:
@@ -2836,7 +2836,7 @@ components:
             secrets:
               password: string
             ssl:
-              rootCertificate: base64-encoded string 
+              rootCertificate: base64-encoded string
               sslCertificate: base64-encoded string
               sslCertificateKey: base64-encoded string
 
@@ -2926,7 +2926,7 @@ components:
         ifExists:
           description: |
             The behavior if the target location already exists.
-            
+
             - `APPEND`: Append the data to the existing target.
             - `REPLACE`: Replace the existing target with the new data.
             - `FAIL`: Fail if the target already exists.
@@ -3014,7 +3014,7 @@ components:
     GeneratorRandomState:
       type: "integer"
       description: |
-        Seed for the random number generators. If None, the random number generator is initialized randomly, yielding different results for every run. 
+        Seed for the random number generators. If None, the random number generator is initialized randomly, yielding different results for every run.
         Setting it to a specific integer ensures reproducible results across runs.
         Useful when consistent results are desired, e.g. for testing or debugging.
     GeneratorListItem:
@@ -3044,7 +3044,7 @@ components:
       type: "object"
       description: |
         A generator is a set models that can generate synthetic data.
-        
+
         The generator can be trained on one or more source tables. A quality assurance report is generated for each model.
       properties:
         id:
@@ -3273,7 +3273,7 @@ components:
     GeneratorCloneTrainingStatus:
       description: |
         The training status of the new generator. The available options are:
-        
+
         - `NEW`: The new generator will re-use existing data and model configurations.
         - `CONTINUE`: The new generator will re-use existing data and model configurations, as well as model weights.
       enum:
@@ -3461,7 +3461,7 @@ components:
           type: "boolean"
           description: |
             If true, then the trained generator can be used for conditional generation, rebalancing, imputation and fairness.
-            If none of these will be needed, then one can gain extra accuracy by disabling this feature. This will then result in a fixed 
+            If none of these will be needed, then one can gain extra accuracy by disabling this feature. This will then result in a fixed
             column order being fed into the training process, rather than a column order, that is randomly permuted for every batch.
           default: true
         valueProtection:
@@ -3473,7 +3473,7 @@ components:
           description: |
             Specifies how rare categories will be sampled.
             Only applicable if value protection has been enabled.
-            
+
             - `CONSTANT`: Replace rare categories by a constant `_RARE_` token.
             - `SAMPLE`: Replace rare categories by a sample from non-rare categories.
           type: "string"
@@ -3622,7 +3622,7 @@ components:
       type: "string"
       description: |
         The status of a job or a step.
-        
+
         - `NEW`: The job/step is being configured, and has not started yet
         - `CONTINUE`: The job/step is being configured, but has existing artifacts
         - `ON_HOLD`: The job/step has been started, but is kept on hold
@@ -3723,8 +3723,8 @@ components:
     SyntheticDataset:
       type: "object"
       description: |
-        A synthetic dataset is created based on a trained generator. 
-        
+        A synthetic dataset is created based on a trained generator.
+
         It consists of synthetic samples, as well as a quality assurance report.
       properties:
         id:
@@ -4141,7 +4141,7 @@ components:
       type: "string"
       minLength: 0
       description: |
-        The content of a message. 
+        The content of a message.
         For file-based artifacts, this contains the filename and nothing else.
         For resource-based artifacts, this contains the UUID and nothing else.
     AssistantMessageFiles:
@@ -4490,7 +4490,7 @@ components:
         - "ADMIN"
       description: |
         The role of the user in the organization
-        
+
         - `VIEWER`: The user can view and use all resources of the organization
         - `CONTRIBUTOR`: The user can create new resources for an organization, and becomes resource ADMIN
         - `ADMIN`: The user can manage members and all resources of an organization
@@ -4509,8 +4509,8 @@ components:
         - "PRIVATE"
         - "UNLISTED"
       description: |
-        Indicates the visibility of the resource. 
-        
+        Indicates the visibility of the resource.
+
         - `PUBLIC` - Everyone can access the resource.
         - `UNLISTED`- Anyone with the direct link can access the resource. No public listings.
         - `PRIVATE` - Accessible only by the owner. For organizations, all members can access.
@@ -4658,7 +4658,7 @@ components:
       type: "string"
       description: |
         The encoding type used for model training and data generation.
-        
+
         - `AUTO`: Model chooses among available encoding types based on the column's data type.
         - `TABULAR_CATEGORICAL`: Model samples from existing (non-rare) categories.
         - `TABULAR_NUMERIC_AUTO`: Model chooses among 3 numeric encoding types based on the values.
@@ -4729,9 +4729,9 @@ components:
     FairnessConfig:
       type: "object"
       description: |
-        Configure a fairness objective for the table. 
+        Configure a fairness objective for the table.
         Only applicable for a subject table.
-        The generated synthetic data will maintain robust statistical parity between the target column and 
+        The generated synthetic data will maintain robust statistical parity between the target column and
         the specified sensitive columns. All these columns must be categorical.
       properties:
         targetColumn:
@@ -4749,14 +4749,14 @@ components:
     DifferentialPrivacyConfig:
       type: "object"
       description: |
-        The optional differential privacy configuration for training the model. 
+        The optional differential privacy configuration for training the model.
         If not provided, then no differential privacy will be applied.
       properties:
         maxEpsilon:
           type: "number"
           format: "double"
           description: |
-            Specifies the maximum allowable epsilon value. If the training process exceeds this threshold, it will be terminated early. Only model checkpoints with epsilon values below this limit will be retained. 
+            Specifies the maximum allowable epsilon value. If the training process exceeds this threshold, it will be terminated early. Only model checkpoints with epsilon values below this limit will be retained.
             If not provided, the training will proceed without early termination based on epsilon constraints.
           default: 10.0
           minimum: 0.0
@@ -4766,7 +4766,7 @@ components:
           type: "number"
           format: "double"
           description: |
-            The delta value for differential privacy. It is the probability of the privacy guarantee not holding. 
+            The delta value for differential privacy. It is the probability of the privacy guarantee not holding.
             The smaller the delta, the more confident you can be that the privacy guarantee holds.
             This delta will be equally distributed between the analysis and the training phase.
           default: 1e-5
@@ -4808,14 +4808,14 @@ components:
       type: "object"
       description: |
         Metrics regarding the quality of synthetic data, measured in terms of accuracy, similarity, and distances.
-        
+
         1. **Accuracy**: Metrics regarding the accuracy of synthetic data, measured as the closeness of discretized lower
         dimensional marginal distributions.
         2. **Similarity**: Metrics regarding the similarity of the full joint distributions of samples within an embedding
         space.
         3. **Distances**: Metrics regarding the nearest neighbor distances between training, holdout, and synthetic samples
         in an numeric encoding space. Useful for assessing the novelty / privacy of synthetic data.
-        
+
         The quality of synthetic data is assessed by comparing these metrics to the same metrics of a holdout dataset.
         The holdout dataset is a subset of the original training data, that was not used for training the synthetic data
         generator. The metrics of the synthetic data should be as close as possible to the metrics of the holdout data.
@@ -4831,21 +4831,21 @@ components:
       description: |
         Metrics regarding the accuracy of synthetic data, measured as the closeness of discretized lower dimensional
         marginal distributions.
-    
+
         1. **Univariate Accuracy**: The accuracy of the univariate distributions for all target columns.
         2. **Bivariate Accuracy**: The accuracy of all pair-wise distributions for target columns, as well as for target
         columns with respect to the context columns.
         3. **Trivariate Accuracy**: The accuracy of all three-way distributions for target columns.
         4. **Coherence Accuracy**: The accuracy of the auto-correlation for all target columns.
-    
+
         Accuracy is defined as 100% - [Total Variation Distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures) (TVD),
         whereas TVD is half the sum of the absolute differences of the relative frequencies of the corresponding
         distributions.
-    
+
         These accuracies are calculated for all discretized univariate, and bivariate distributions. In case of sequential
         data, also for all coherence distributions. Overall metrics are then calculated as the average across these
         accuracies.
-    
+
         All metrics can be compared against a theoretical maximum accuracy, which is calculated for a same-sized holdout.
         The accuracy metrics shall be as close as possible to the theoretical maximum, but not significantly higher, as
         this would indicate overfitting.
@@ -4924,7 +4924,7 @@ components:
       type: "object"
       description: |
         Metrics regarding the similarity of the full joint distributions of samples within an embedding space.
-        
+
         1. **Cosine Similarity**: The cosine similarity between the centroids of synthetic and training samples.
         2. **Discriminator AUC**: The AUC of a discriminative model to distinguish between synthetic and training samples.
 
@@ -4932,10 +4932,10 @@ components:
         used to compute the embeddings of a string-ified representation of individual records. In case of sequential data
         the records, that belong to the same group, are being concatenated. We then calculate the cosine similarity
         between the centroids of the provided datasets within the embedding space.
-        
+
         Again, we expect the similarity metrics to be as close as possible to 1, but not significantly higher than what is
         measured for the holdout data, as this would again indicate overfitting.
-        
+
         In addition, a discriminative ML model is trained to distinguish between training and synthetic samples. The
         ability of this model to distinguish between training and synthetic samples is measured by the AUC score. For
         synthetic data to be considered realistic, the AUC score should be close to 0.5, which indicates that the synthetic
@@ -4949,7 +4949,7 @@ components:
           maximum: 1.0
         cosineSimilarityTrainingHoldout:
           description: |
-            Cosine similarity between training and holdout centroids. 
+            Cosine similarity between training and holdout centroids.
             Serves as a reference for `cosine_similarity_training_synthetic`.
           type: "number"
           format: "double"
@@ -4963,7 +4963,7 @@ components:
           maximum: 1.0
         discriminatorAUCTrainingHoldout:
           description: |
-            Cross-validated AUC of a discriminative model to distinguish between training and holdout samples. 
+            Cross-validated AUC of a discriminative model to distinguish between training and holdout samples.
             Serves as a reference for `discriminator_auc_training_synthetic`.
           type: "number"
           format: "double"
@@ -4974,18 +4974,18 @@ components:
       description: |
         Metrics regarding the nearest neighbor distances between training, holdout, and synthetic samples in an numerically
         encoded space. Useful for assessing the novelty / privacy of synthetic data.
-    
+
         The provided data is first down-sampled, so that the number of samples match across all datasets. Note, that for
         an optimal sensitivity of this privacy assessment it is recommended to use a 50/50 split between training and
         holdout data, and then generate synthetic data of the same size.
-    
+
         The numerical encodings of these samples are then computed, and the nearest neighbor distances are calculated for each
         synthetic sample to the training and holdout samples. Based on these nearest neighbor distances the following
         metrics are calculated:
         - Identical Match Share (IMS): The share of synthetic samples that are identical to a training or holdout sample.
         - Distance to Closest Record (DCR): The average distance of synthetic to training or holdout samples.
         - Nearest Neighbor Distance Ratio (NNDR): The 10-th smallest ratio of the distance to nearest and second nearest neighbor.
-    
+
         For privacy-safe synthetic data we expect to see about as many identical matches, and about the same distances
         for synthetic samples to training, as we see for synthetic samples to holdout.
       properties:
