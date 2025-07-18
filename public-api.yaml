@@ -19,6 +19,8 @@ info:
 tags:
   - name: "Connectors"
     description: "Integration with external data sources and data destinations"
+  - name: "Datasets"
+    description: "A dataset to be consumed via the assistant"
   - name: "Generators"
     description: "Training a generator based on some source data"
   - name: "Source Tables"
@@ -384,6 +386,203 @@ paths:
       description: "Unlike the provided connector."
       operationId: "unLikeConnector"
       tags: [ "Likes" ]
+      responses:
+        "200":
+          description: "OK"
+
+  # DATASETS
+  /datasets:
+    get:
+      summary: "List datasets"
+      description: |
+        Paginate through all datasets the user has access to.
+      operationId: "listDatasets"
+      tags: [ "Datasets" ]
+      parameters:
+        - $ref: "#/components/parameters/pageOffset"
+        - $ref: "#/components/parameters/pageLimit"
+        - $ref: "#/components/parameters/filterBySearchTerm"
+        - $ref: "#/components/parameters/filterByOwnerId"
+        - $ref: "#/components/parameters/filterByVisibility"
+        - $ref: "#/components/parameters/filterByCreatedFrom"
+        - $ref: "#/components/parameters/filterByCreatedTo"
+        - $ref: "#/components/parameters/sortByOptionsForDatasets"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                properties:
+                  totalCount:
+                    $ref: "#/components/schemas/PaginatedTotalCount"
+                  results:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/DatasetListItem"
+    post:
+      summary: "Create dataset"
+      description: "Create a dataset."
+      operationId: "createDataset"
+      tags: [ "Datasets" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DatasetConfig"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+  /datasets/{id}:
+    parameters:
+      - $ref: "#/components/parameters/datasetIdPath"
+    get:
+      summary: "Retrieve dataset"
+      operationId: "getDataset"
+      tags: [ "Datasets" ]
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+    patch:
+      summary: "Update dataset"
+      operationId: "patchDataset"
+      tags: [ "Datasets" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DatasetPatchConfig"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+    delete:
+      summary: "Delete dataset"
+      operationId: "deleteDataset"
+      tags: [ "Datasets" ]
+      responses:
+        "200":
+          description: "OK"
+  /datasets/{id}/file:
+    parameters:
+      - $ref: "#/components/parameters/datasetIdPath"
+    post:
+      summary: "Upload file to the file upload connector of a dataset"
+      operationId: "uploadDatasetFile"
+      tags: [ "Datasets" ]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: "object"
+              properties:
+                file:
+                  type: "string"
+                  format: "binary"
+              required:
+                - "file"
+      responses:
+        "200":
+          description: "OK"
+    get:
+      summary: "Retrieve uploaded file."
+      operationId: "getDatasetFile"
+      tags: [ "Datasets" ]
+      x-stream-response: true
+      parameters:
+        - name: "filepath"
+          in: "query"
+          schema:
+            type: "string"
+          required: true
+        - $ref: "#/components/parameters/shortLivedFileToken"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/octet-stream:
+              schema:
+                type: "string"
+                format: "binary"
+    delete:
+      summary: "Delete a file from a dataset."
+      description: "Delete a file from a dataset."
+      operationId: "deleteDatasetFile"
+      tags: [ "Datasets" ]
+      parameters:
+        - name: "filepath"
+          in: "query"
+          schema:
+            type: "string"
+          required: true
+      responses:
+        "200":
+          description: "OK"
+  /datasets/{id}/like:
+    parameters:
+      - $ref: "#/components/parameters/datasetIdPath"
+    post:
+      summary: "Like a dataset"
+      description: "Like the provided dataset."
+      operationId: "likeDataset"
+      tags: [ "Likes" ]
+      responses:
+        "200":
+          description: "OK"
+    delete:
+      summary: "Unlike a dataset"
+      description: "Unlike the provided dataset."
+      operationId: "unLikeDataset"
+      tags: [ "Likes" ]
+      responses:
+        "200":
+          description: "OK"
+  /datasets/{id}/transfer:
+    parameters:
+      - $ref: "#/components/parameters/datasetIdPath"
+    put:
+      summary: "Transfer ownership of the resource either to an organization where the current user has at least CONTRIBUTOR permissions, or to the current user themselves. Requires the current user to have resource permission level `ADMIN`."
+      operationId: "transferOwnershipDataset"
+      tags: [ "Datasets" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferOwnershipConfig"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+  /datasets/{id}/visibility:
+    parameters:
+      - $ref: "#/components/parameters/datasetIdPath"
+    put:
+      summary: "Set dataset visibility. Requires the current user to have resource permission level `ADMIN`."
+      operationId: "setDatasetVisibility"
+      tags: [ "Datasets" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetVisibilityConfig"
       responses:
         "200":
           description: "OK"
@@ -1389,23 +1588,6 @@ paths:
                 properties:
                   status:
                     $ref: "#/components/schemas/AssistantThreadSessionStatus"
-  /assistant/threads/{id}/export:
-    parameters:
-      - $ref: "#/components/parameters/assistantThreadIdPath"
-    get:
-      summary: "Export the assistant thread"
-      operationId: "exportThread"
-      x-stream-response: true
-      parameters:
-        - $ref: "#/components/parameters/shortLivedFileToken"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/zip:
-              schema:
-                type: "string"
-                format: "binary"
   /assistant/threads/{id}/messages:
     parameters:
       - $ref: "#/components/parameters/assistantThreadIdPath"
@@ -1447,25 +1629,50 @@ paths:
               data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: '3!', finishReason: 'stop'}
 
               data: [DONE]
-
-          #            if stream=False then return array of AssistantMessages:
-          #
-          #              [
-          #                {id: 'xyz1', role: 'assistant', 'contentType': 'text', content: 'ok, I will write some python.', finishReason: 'stop'},
-          #                {id: 'abc2', role: 'assistant', 'contentType': 'python', content: 'r = sqrt(9)\nr', finishReason: 'tool_calls'},
-          #                {id: 'def3', role: 'tool', 'contentType': 'text', content: '3', finishReason: 'stop'},
-          #                {id: 'ghi4', role: 'assistant', 'contentType': 'text', content: 'The answer is 3!', finishReason: 'stop'},
-          #              ]
-
           content:
-            #            application/json:
-            #              schema:
-            #                type: "array"
-            #                items:
-            #                  - $ref: "#/components/schemas/AssistantMessage"
             text/event-stream:
               schema:
                 $ref: "#/components/schemas/MessageStreamEvent"
+
+  /assistant/threads/{id}/messages/stream:
+    parameters:
+      - $ref: "#/components/parameters/assistantThreadIdPath"
+    get:
+        summary: "Stream assistant messages"
+        operationId: "streamAssistantMessages"
+        x-codegen-ignore: true
+        tags: [ "Assistant" ]
+        responses:
+          "200":
+            description: |
+              The newly created messages (excluding the user message)
+
+              if stream=True then return stream of sever-sent events of type AssistantMessageDelta:
+
+                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'ok,', finishReason: None}
+                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'I', finishReason: None}
+                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'will,', finishReason: None}
+                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'write', finishReason: None}
+                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'some', finishReason: None}
+                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'python.', finishReason: None}
+
+                data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r =', finishReason: None}
+                data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r =', finishReason: None}
+                data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r', finishReason: None}
+                data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: None, finishReason: 'tool_calls'}
+
+                data: {id: 'def3', role: 'tool', 'contentType': 'text', delta: '3', finishReason: 'stop'}
+
+                data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'The', finishReason: None}
+                data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'answer', finishReason: None}
+                data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'is', finishReason: None}
+                data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: '3!', finishReason: 'stop'}
+
+                data: [DONE]
+            content:
+              text/event-stream:
+                schema:
+                  $ref: "#/components/schemas/MessageStreamEvent"
   /assistant/threads/{id}/file:
     parameters:
       - $ref: "#/components/parameters/assistantThreadIdPath"
@@ -2057,6 +2264,27 @@ components:
       required: true
       schema:
         type: "string"
+    datasetConnectorIdPath:
+        name: "connectorId"
+        description: "The unique identifier of a connector."
+        in: "path"
+        required: true
+        schema:
+            type: "string"
+    datasetIdPath:
+      name: "id"
+      description: "The unique identifier of a dataset."
+      in: "path"
+      required: true
+      schema:
+        type: "string"
+    datasetFileNamePath:
+      name: "fileName"
+      description: "The name of a file in a dataset."
+      in: "path"
+      required: true
+      schema:
+        type: "string"
     modelTypePath:
       name: "modelType"
       description: "Model type"
@@ -2169,6 +2397,16 @@ components:
         type: "array"
         items:
           $ref: "#/components/schemas/ConnectorSortField"
+    sortByOptionsForDatasets:
+      name: "sortBy"
+      in: "query"
+      required: false
+      style: "form"
+      explode: false
+      schema:
+        type: "array"
+        items:
+          $ref: "#/components/schemas/DatasetSortField"
     reportType:
       name: "reportType"
       description: "Synthetic dataset report type"
@@ -2191,7 +2429,6 @@ components:
       style: "form"
       schema:
         type: "string"
-      required: true
     generatorIdPath:
       name: "id"
       description: "The unique identifier of a generator."
@@ -2578,6 +2815,107 @@ components:
       type: "integer"
       description: "The total number of entities within the list"
 
+    # DATASETS
+    DatasetId:
+      type: "string"
+      description: "The unique identifier of a dataset."
+    DatasetFileName:
+      type: "string"
+      description: "The name of a dataset file."
+    DatasetName:
+      type: "string"
+      description: "The name of a dataset."
+    DatasetDescription:
+      type: "string"
+      description: "The description of / instructions for a dataset."
+    DatasetUsage:
+      type: "object"
+      description: "Usage statistics of a dataset."
+      properties:
+        noOfLikes:
+          type: "integer"
+          description: "Number of likes of this dataset."
+    DatasetConnectorLocations:
+      type: "array"
+      items:
+        type: "string"
+        description: "Specifies the target within the connector from which to retrieve the data. The format of this parameter varies by connector type."
+    DatasetConnector:
+      type: "object"
+      description: "Configuration for a dataset connector."
+      properties:
+        connectorId:
+          $ref: "#/components/schemas/ConnectorId"
+        locations:
+          $ref: "#/components/schemas/DatasetConnectorLocations"
+    Dataset:
+      type: "object"
+      description: "A dataset to be consumed via the assistant."
+      properties:
+        id:
+          $ref: "#/components/schemas/DatasetId"
+        name:
+          $ref: "#/components/schemas/DatasetName"
+        description:
+          $ref: "#/components/schemas/DatasetDescription"
+        connectors:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DatasetConnector"
+        files:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DatasetFileName"
+        usage:
+          $ref: "#/components/schemas/DatasetUsage"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+      required:
+        - "id"
+    DatasetListItem:
+      type: "object"
+      description: "Essential dataset details for listings."
+      properties:
+        id:
+          $ref: "#/components/schemas/DatasetId"
+        name:
+          $ref: "#/components/schemas/DatasetName"
+        usage:
+          $ref: "#/components/schemas/DatasetUsage"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+      required:
+        - "id"
+    DatasetConfig:
+      type: "object"
+      description: "The configuration for creating a dataset."
+      properties:
+        name:
+          $ref: "#/components/schemas/DatasetName"
+        description:
+          $ref: "#/components/schemas/DatasetDescription"
+        connectors:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DatasetConnector"
+    DatasetPatchConfig:
+      type: "object"
+      description: "The configuration for updating a dataset."
+      properties:
+        name:
+          $ref: "#/components/schemas/DatasetName"
+        description:
+          $ref: "#/components/schemas/DatasetDescription"
+        connectors:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DatasetConnector"
+    DatasetSortField:
+      type: "string"
+      enum:
+        - "RECENCY"
+        - "NO_OF_LIKES"
+
     # CONNECTOR
     ConnectorId:
       type: "string"
@@ -2671,6 +3009,9 @@ components:
         noOfLikes:
           type: "integer"
           description: "Number of likes of this connector."
+        noOfThreads:
+          type: "integer"
+          description: "Number of assistant threads using this connector."
     ConnectorListItem:
       type: "object"
       description: "Essential connector details for listings."
@@ -2952,6 +3293,7 @@ components:
         - "RECENCY"
         - "NO_OF_GENERATORS"
         - "NO_OF_LIKES"
+        - "NO_OF_THREADS"
 
     # GENERATOR
     GeneratorId:
@@ -3011,6 +3353,9 @@ components:
         noOfLikes:
           type: "integer"
           description: "Number of likes of this generator."
+        noOfThreads:
+          type: "integer"
+          description: "Number of assistant threads using this generator."
     GeneratorRandomState:
       type: "integer"
       description: |
@@ -3175,7 +3520,7 @@ components:
     SourceColumnValueRange:
       description: |
         The (privacy-safe) range of values detected within a source column. These values can then be used as seed values
-        for conditional generation. For CATEGORICAL and NUMERIC_DISCRETE encoding types, this will be given as a list
+        for conditional simulation. For CATEGORICAL and NUMERIC_DISCRETE encoding types, this will be given as a list
         of unique values, sorted by popularity. For other NUMERIC and for DATETIME encoding types, this will be given
         as a min and max value. Note, that this property will only be populated, once the analysis step for the training
         of the generator has been completed.
@@ -3403,6 +3748,7 @@ components:
       enum:
         - "RECENCY"
         - "NO_OF_LIKES"
+        - "NO_OF_THREADS"
         - "NO_OF_SYNTHETIC_DATASETS"
     # MODEL
     ModelId:
@@ -3460,7 +3806,7 @@ components:
         enableFlexibleGeneration:
           type: "boolean"
           description: |
-            If true, then the trained generator can be used for conditional generation, rebalancing, imputation and fairness.
+            If true, then the trained generator can be used for conditional simulation, rebalancing, imputation and fairness.
             If none of these will be needed, then one can gain extra accuracy by disabling this feature. This will then result in a fixed
             column order being fed into the training process, rather than a column order, that is randomly permuted for every batch.
           default: true
@@ -3693,6 +4039,9 @@ components:
         noOfDownloads:
           type: "integer"
           description: "Number of downloads of this synthetic dataset."
+        noOfThreads:
+          type: "integer"
+          description: "Number of assistant threads using this synthetic dataset."
     SyntheticDatasetRandomState:
       type: "integer"
       description: |
@@ -3797,7 +4146,7 @@ components:
       default: 1.0
     SyntheticTableSampleSeedConnectorId:
       description: |
-        The connector id of the seed data for conditional generation.
+        The connector id of the seed data for conditional simulation.
         Only applicable for subject tables.
       type: "string"
       readOnly: true
@@ -3811,7 +4160,7 @@ components:
       type: "string"
       description: |
         The base64-encoded string derived from a Parquet file containing the specified sample seed data.
-        This allows conditional generation as well as live probing via python clients.
+        This allows conditional simulation as well as live probing via python clients.
         Only applicable for subject tables.
     SyntheticTableConfiguration:
       type: "object"
@@ -3972,6 +4321,7 @@ components:
         - "RECENCY"
         - "NO_OF_LIKES"
         - "NO_OF_DOWNLOADS"
+        - "NO_OF_THREADS"
     # ASSISTANT
     AssistantSettingsIsEnabled:
       type: "boolean"
@@ -4086,6 +4436,10 @@ components:
               ... .to_pdf(fn); fn ...                '/mnt/...'       assistant         python
               /mnt/data/some.pdf                                      assistant         artifact/file       NEW
               Here you go.                                            assistant         text
+              Create an interactvie plot                              user              text
+              ... .to_html(fn); fn ...               '/mnt/...'       assistant         python
+              /mnt/data/interactive_plot.html                         assistant         artifact/html       NEW
+              Here you go.                                            assistant         text
               pd.__version__                         2.2.5            user              python
               It's pandas version 2.2.5.                              assistant         text
               Fetch me the census generator                           user              text
@@ -4121,9 +4475,11 @@ components:
         - "artifact/data"
         #        Files produced by broker
         - "artifact/file"
+        - "artifact/html"
         - "artifact/generator"
         - "artifact/synthetic-dataset"
         - "artifact/connector"
+        - "artifact/dataset"
     AssistantMessageDeltaContentType:
       type: "string"
       description: "The type of the message content"
@@ -4134,6 +4490,7 @@ components:
         - "artifact/image"
         - "artifact/data"
         - "artifact/file"
+        - "artifact/html"
         - "artifact/generator"
         - "artifact/synthetic-dataset"
         - "artifact/connector"
