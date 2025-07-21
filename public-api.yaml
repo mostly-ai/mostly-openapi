@@ -2915,6 +2915,7 @@ components:
       enum:
         - "RECENCY"
         - "NO_OF_LIKES"
+        - "NO_OF_THREADS"
 
     # CONNECTOR
     ConnectorId:
@@ -4494,6 +4495,7 @@ components:
         - "artifact/generator"
         - "artifact/synthetic-dataset"
         - "artifact/connector"
+        - "artifact/dataset"
     AssistantMessageContent:
       type: "string"
       minLength: 0
@@ -4684,6 +4686,11 @@ components:
           format: "double"
           description: "The amount of GPU memory in GB"
           default: 0
+        storage:
+          type: "number"
+          format: "double"
+          default: 4
+          description: "Ephemeral storage in GiB (Kubernetes only)"
     ComputeConfigParams:
       type: "object"
       description: "Configuration parameters for a compute resource."
