@@ -2,9 +2,9 @@ name: Publish OpenAPI Spec to Postman
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - '*'
+  # push:
+  #   tags:
+  #     - '*'
 
 jobs:
   publish-specification:
@@ -12,14 +12,14 @@ jobs:
     steps:
       - name: Setup | Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Setup | Python
         uses: actions/setup-python@v5
-      
+
       - name: Setup | Pip Dependencies
         run: |
           pip install -r scripts/postman-publisher/requirements.txt
-      
+
       - name: Build | Publish OpenAPI Specification to Postman
         env:
           POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
