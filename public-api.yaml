@@ -47,6 +47,8 @@ tags:
     description: "Like, unlike or count likes on resources"
   - name: "Organizations"
     description: "Organization management"
+  - name: "Artifacts"
+    description: "Shareable artifacts from assistant chats"
 
 paths:
 
@@ -476,6 +478,46 @@ paths:
       responses:
         "200":
           description: "OK"
+  /datasets/{id}/connectors/{connectorId}:
+    parameters:
+      - $ref: "#/components/parameters/datasetIdPath"
+      - $ref: "#/components/parameters/datasetConnectorIdPath"
+    get:
+      summary: "Retrieve dataset connector"
+      operationId: "getDatasetConnector"
+      tags: [ "Datasets" ]
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatasetConnector"
+    put:
+      summary: "Add a connector to dataset"
+      operationId: "addDatasetConnector"
+      tags: [ "Datasets" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DatasetConnectorLocationsConfig"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatasetConnector"
+    delete:
+      summary: "Delete dataset connector"
+      operationId: "deleteDatasetConnector"
+      tags: [ "Datasets" ]
+      responses:
+        "200":
+          description: "OK"
+
   /datasets/{id}/file:
     parameters:
       - $ref: "#/components/parameters/datasetIdPath"
@@ -1725,6 +1767,72 @@ paths:
         "200":
           description: "OK"
 
+  # ARTIFACTS
+  /artifacts:
+    post:
+      summary: "Create artifact"
+      description: |
+        Create a shareable artifact from an assistant message.
+        The assistant message must be of type `artifact/image` or `artifact/html`.
+        
+        This endpoint will:
+        1. Generate a title and description for the artifact using the previous conversation context
+        2. Copy the artifact file to persistent storage
+        3. Return the created artifact details
+      operationId: "createArtifact"
+      tags: [ "Artifacts" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArtifactConfig"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Artifact"
+
+  /artifacts/{id}:
+    parameters:
+      - $ref: "#/components/parameters/artifactIdPath"
+    get:
+      summary: "Retrieve artifact"
+      description: |
+        Retrieve artifact metadata including the shareable URL where the artifact can be viewed.
+        This endpoint allows unauthenticated access to enable public sharing of artifacts.
+      operationId: "getArtifact"
+      tags: [ "Artifacts" ]
+      security: []  # Override global security to allow unauthenticated access
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Artifact"
+    patch:
+      summary: "Update artifact"
+      description: |
+        Update an artifact's name or description. Only the creator can update an artifact.
+      operationId: "patchArtifact"
+      tags: [ "Artifacts" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArtifactPatchConfig"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Artifact"
+
   # USERS
   /users/me/key:
     put:
@@ -2485,6 +2593,13 @@ components:
       required: true
       schema:
         type: "string"
+    artifactIdPath:
+      name: "id"
+      description: "The unique identifier of an artifact."
+      in: "path"
+      required: true
+      schema:
+        type: "string"
     computeIdPath:
       name: "id"
       description: "The unique identifier of a compute."
@@ -2835,17 +2950,48 @@ components:
         noOfLikes:
           type: "integer"
           description: "Number of likes of this dataset."
+        noOfThreads:
+          type: "integer"
+          description: "Number of assistant threads using this dataset."
     DatasetConnectorLocations:
       type: "array"
       items:
         type: "string"
         description: "Specifies the target within the connector from which to retrieve the data. The format of this parameter varies by connector type."
+    DatasetConnectorLocationsConfig:
+      type: "object"
+      description: "Configuration for adding connector to dataset."
+      properties:
+        locations:
+          $ref: "#/components/schemas/DatasetConnectorLocations"
+    DatasetConnectorConfig:
+      type: "object"
+      description: "Configuration for a dataset connector."
+      properties:
+        id:
+          $ref: "#/components/schemas/ConnectorId"
+        locations:
+          $ref: "#/components/schemas/DatasetConnectorLocations"
+      required:
+        - "id"
     DatasetConnector:
       type: "object"
       description: "Configuration for a dataset connector."
       properties:
-        connectorId:
+        id:
           $ref: "#/components/schemas/ConnectorId"
+        name:
+          $ref: "#/components/schemas/ConnectorName"
+        description:
+          $ref: "#/components/schemas/ConnectorDescription"
+        type:
+          $ref: "#/components/schemas/ConnectorType"
+        accessType:
+          $ref: "#/components/schemas/ConnectorAccessType"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        usage:
+          $ref: "#/components/schemas/ConnectorUsage"
         locations:
           $ref: "#/components/schemas/DatasetConnectorLocations"
     Dataset:
@@ -2897,7 +3043,7 @@ components:
         connectors:
           type: "array"
           items:
-            $ref: "#/components/schemas/DatasetConnector"
+            $ref: "#/components/schemas/DatasetConnectorConfig"
     DatasetPatchConfig:
       type: "object"
       description: "The configuration for updating a dataset."
@@ -2909,7 +3055,7 @@ components:
         connectors:
           type: "array"
           items:
-            $ref: "#/components/schemas/DatasetConnector"
+            $ref: "#/components/schemas/DatasetConnectorConfig"
     DatasetSortField:
       type: "string"
       enum:
@@ -4481,6 +4627,7 @@ components:
         - "artifact/synthetic-dataset"
         - "artifact/connector"
         - "artifact/dataset"
+        - "artifact/shareable-artifact"
     AssistantMessageDeltaContentType:
       type: "string"
       description: "The type of the message content"
@@ -4621,6 +4768,84 @@ components:
           type: "number"
           format: "double"
           description: "The total virtual GPU time in seconds used for the active session of this thread."
+
+    # ARTIFACTS
+    ArtifactId:
+      type: "string"
+      description: "The unique identifier of an artifact."
+    ArtifactName:
+      type: "string"
+      description: "The name/title of an artifact."
+      minLength: 1
+      maxLength: 256
+    ArtifactDescription:
+      type: "string"
+      description: "The description/prompt of an artifact that explains how to recreate it."
+    ArtifactType:
+      type: "string"
+      description: "The type of artifact content."
+      enum:
+        - "image"
+        - "html"
+    ArtifactShareableUrl:
+      type: "string"
+      description: "Public URL where the artifact can be viewed and shared."
+    ArtifactUsage:
+      type: "object"
+      description: "Usage statistics of an artifact."
+      properties:
+        noOfThreads:
+          type: "integer"
+          description: "Number of assistant threads started from this artifact."
+
+    ArtifactPreview:
+      type: "object"
+      description: "Preview information for an artifact."
+      properties:
+        image:
+          type: "string"
+          description: "URL to a preview image for the artifact."
+    Artifact:
+      type: "object"
+      description: "A shareable artifact generated from an assistant conversation."
+      properties:
+        id:
+          $ref: "#/components/schemas/ArtifactId"
+        name:
+          $ref: "#/components/schemas/ArtifactName"
+        description:
+          $ref: "#/components/schemas/ArtifactDescription"
+        type:
+          $ref: "#/components/schemas/ArtifactType"
+        preview:
+          $ref: "#/components/schemas/ArtifactPreview"
+        shareableUrl:
+          $ref: "#/components/schemas/ArtifactShareableUrl"
+        usage:
+          $ref: "#/components/schemas/ArtifactUsage"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+      required:
+        - "id"
+        - "name"
+        - "description"
+        - "shareableUrl"
+    ArtifactConfig:
+      type: "object"
+      description: "Configuration for creating an artifact from an assistant message."
+      properties:
+        assistantMessageId:
+          $ref: "#/components/schemas/AssistantMessageId"
+      required:
+        - "assistantMessageId"
+    ArtifactPatchConfig:
+      type: "object"
+      description: "Configuration for updating an artifact."
+      properties:
+        name:
+          $ref: "#/components/schemas/ArtifactName"
+        description:
+          $ref: "#/components/schemas/ArtifactDescription"
 
     # Assistant Configs
     AssistantThreadConfig:
