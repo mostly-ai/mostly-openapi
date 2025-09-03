@@ -49,6 +49,8 @@ tags:
     description: "Organization management"
   - name: "Artifacts"
     description: "Shareable artifacts from assistant chats"
+  - name: "Billing"
+    description: "Manage all billing-related operations"
 
 paths:
 
@@ -1292,7 +1294,7 @@ paths:
       - $ref: "#/components/parameters/syntheticDatasetIdPath"
       - $ref: "#/components/parameters/syntheticTableIdPath"
     post:
-      summary: "Add sample seed data to synthetic dataset by uploading a data file. Only applicable for subject tables."
+      summary: "Add sample seed data to synthetic dataset by uploading a data file"
       operationId: "uploadSampleSeed"
       tags: [ "Synthetic Tables" ]
       requestBody:
@@ -1680,41 +1682,41 @@ paths:
     parameters:
       - $ref: "#/components/parameters/assistantThreadIdPath"
     get:
-        summary: "Stream assistant messages"
-        operationId: "streamAssistantMessages"
-        x-codegen-ignore: true
-        tags: [ "Assistant" ]
-        responses:
-          "200":
-            description: |
-              The newly created messages (excluding the user message)
-
-              if stream=True then return stream of sever-sent events of type AssistantMessageDelta:
-
-                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'ok,', finishReason: None}
-                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'I', finishReason: None}
-                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'will,', finishReason: None}
-                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'write', finishReason: None}
-                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'some', finishReason: None}
-                data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'python.', finishReason: None}
-
-                data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r =', finishReason: None}
-                data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r =', finishReason: None}
-                data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r', finishReason: None}
-                data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: None, finishReason: 'tool_calls'}
-
-                data: {id: 'def3', role: 'tool', 'contentType': 'text', delta: '3', finishReason: 'stop'}
-
-                data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'The', finishReason: None}
-                data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'answer', finishReason: None}
-                data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'is', finishReason: None}
-                data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: '3!', finishReason: 'stop'}
-
-                data: [DONE]
-            content:
-              text/event-stream:
-                schema:
-                  $ref: "#/components/schemas/MessageStreamEvent"
+      summary: "Stream assistant messages"
+      operationId: "streamAssistantMessages"
+      x-codegen-ignore: true
+      tags: [ "Assistant" ]
+      responses:
+        "200":
+          description: |
+            The newly created messages (excluding the user message)
+            
+            if stream=True then return stream of sever-sent events of type AssistantMessageDelta:
+            
+              data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'ok,', finishReason: None}
+              data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'I', finishReason: None}
+              data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'will,', finishReason: None}
+              data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'write', finishReason: None}
+              data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'some', finishReason: None}
+              data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'python.', finishReason: None}
+            
+              data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r =', finishReason: None}
+              data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r =', finishReason: None}
+              data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r', finishReason: None}
+              data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: None, finishReason: 'tool_calls'}
+            
+              data: {id: 'def3', role: 'tool', 'contentType': 'text', delta: '3', finishReason: 'stop'}
+            
+              data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'The', finishReason: None}
+              data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'answer', finishReason: None}
+              data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'is', finishReason: None}
+              data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: '3!', finishReason: 'stop'}
+            
+              data: [DONE]
+          content:
+            text/event-stream:
+              schema:
+                $ref: "#/components/schemas/MessageStreamEvent"
   /assistant/threads/{id}/file:
     parameters:
       - $ref: "#/components/parameters/assistantThreadIdPath"
@@ -1805,7 +1807,7 @@ paths:
         This endpoint allows unauthenticated access to enable public sharing of artifacts.
       operationId: "getArtifact"
       tags: [ "Artifacts" ]
-      security: []  # Override global security to allow unauthenticated access
+      security: [ ]  # Override global security to allow unauthenticated access
       responses:
         "200":
           description: "OK"
@@ -1876,12 +1878,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/CurrentUser"
     delete:
-      summary: "Delete the current user"
-      operationId: "deleteCurrentUser"
+        summary: "Delete the current user"
+        operationId: "deleteCurrentUser"
+        tags: [ "Users" ]
+        responses:
+            "200":
+                description: "OK"
+
+
+  /users/me/credits:
+    get:
+      summary: "Retrieve current user credits"
+      operationId: "getCurrentUserCredits"
       tags: [ "Users" ]
       responses:
         "200":
           description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserCredits"
 
   /users/me/settings:
     put:
@@ -2023,9 +2039,11 @@ paths:
   /usage-report/periods:
     get:
       summary: "Retrieve usage report by Periods"
+      description: "Retrieve usage reports filtered by credit type. Use the creditType parameter to filter between FREE (natural month cycle) and PAID (billing cycle) credits."
       operationId: "getUsageReportByPeriods"
       parameters:
         - $ref: "#/components/parameters/filterByUser"
+        - $ref: "#/components/parameters/filterByCreditType"
       responses:
         "200":
           description: "OK"
@@ -2303,6 +2321,53 @@ paths:
         "200":
           description: "OK"
 
+  /billing/plans:
+    get:
+      summary: "Retrieve available plans"
+      description: "Retrieve all available billing plans for purchase."
+      operationId: "getAvailablePlans"
+      tags: [ "Billing" ]
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  plans:
+                    type: "array"
+                    description: "Available billing plans for purchase."
+                    items:
+                      $ref: "#/components/schemas/Plan"
+
+  /billing/subscription:
+      get:
+        summary: "Retrieve subscription information"
+        description: "Retrieve the current user's subscription information."
+        operationId: "getSubscriptionInfo"
+        tags: [ "Billing" ]
+        responses:
+          "200":
+            description: "OK"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/BillingInfo"
+          "404":
+            description: "Not Found when user is not subscribed"
+
+      delete:
+        summary: "Cancel subscription"
+        description: "Cancel the current user's subscription. This will cancel the subscription at the end of the current billing cycle."
+        operationId: "cancelSubscription"
+        tags: [ "Billing" ]
+        responses:
+            "200":
+                description: "OK"
+            "404":
+                description: "Not Found when user is not subscribed"
+
   /mostly-websocket:
     get:
       summary: WebSocket Connection
@@ -2373,12 +2438,12 @@ components:
       schema:
         type: "string"
     datasetConnectorIdPath:
-        name: "connectorId"
-        description: "The unique identifier of a connector."
-        in: "path"
-        required: true
-        schema:
-            type: "string"
+      name: "connectorId"
+      description: "The unique identifier of a connector."
+      in: "path"
+      required: true
+      schema:
+        type: "string"
     datasetIdPath:
       name: "id"
       description: "The unique identifier of a dataset."
@@ -2447,6 +2512,15 @@ components:
       schema:
         $ref: "#/components/schemas/FilterByUser"
       required: true
+    filterByCreditType:
+      name: "creditType"
+      description: "Filter by credit type (FREE or PAID)"
+      in: "query"
+      required: true
+      style: "form"
+      explode: false
+      schema:
+        $ref: "#/components/schemas/CreditType"
     filterByVisibility:
       name: "visibility"
       description: "Filter by visibility."
@@ -2751,11 +2825,22 @@ components:
           $ref: "#/components/schemas/UserUsage"
         unreadNotifications:
           $ref: "#/components/schemas/UserUnreadNotifications"
+        plan:
+          $ref: "#/components/schemas/UserPlan"
         organizations:
           type: "array"
           description: "The organizations the user belongs to"
           items:
             $ref: "#/components/schemas/OrganizationListItem"
+
+    UserPlan:
+      type: "string"
+      description: "The type of the user subscription plan."
+      enum:
+        - "FREE"
+        - "PRO"
+        - "UNLIMITED"
+
     UserSettings:
       type: "object"
       description: "Additional optional user settings."
@@ -2790,30 +2875,30 @@ components:
         aboutModelMessage:
           description: "The instruction how the Assistant should respond"
           type: "string"
+    UsageCreditStats:
+      type: "object"
+      description: "User credits statistics and limits for the current user."
+      properties:
+        current:
+          description: "The current credit balance for the user."
+          type: "number"
+          format: "double"
+        limit:
+          description: "The credit limit for the user. If empty, then there is no limit."
+          type: "number"
+          format: "double"
+        periodStart:
+          description: "The UTC date and time when the current time period started."
+          type: "string"
+          format: "date-time"
+        periodEnd:
+          description: "The UTC date and time when the current time period ends."
+          type: "string"
+          format: "date-time"
     UserUsage:
       type: "object"
       description: "Usage statistics and limits for the current user."
       properties:
-        credits:
-          type: "object"
-          description: "The credit balance and limit for the current time period"
-          properties:
-            current:
-              description: "The credit balance for the current time period"
-              type: "number"
-              format: "double"
-            limit:
-              description: "The credit limit for the current time period. If empty, then there is no limit."
-              type: "number"
-              format: "double"
-            periodStart:
-              description: "The UTC date and time when the current time period started"
-              type: "string"
-              format: "date-time"
-            periodEnd:
-              description: "The UTC date and time when the current time period ends"
-              type: "string"
-              format: "date-time"
         parallelTrainingJobs:
           type: "object"
           description: "The number of currently running training jobs and the limit"
@@ -2834,6 +2919,26 @@ components:
             limit:
               description: "The maximum number of running generation jobs at any time. If empty, then there is no limit."
               type: "integer"
+    UserCredits:
+      type: "object"
+      description: "Usage statistics and limits for the current user."
+      properties:
+        free:
+          type: "object"
+          description: "Usage statistics of free credits."
+          properties:
+            daily:
+              $ref: "#/components/schemas/UsageCreditStats"
+            monthly:
+              $ref: "#/components/schemas/UsageCreditStats"
+        paid:
+          type: "object"
+          description: "Usage statistics of paid credits."
+          properties:
+            monthly:
+              $ref: "#/components/schemas/UsageCreditStats"
+      required:
+        - "free"
     TransferOwnershipConfig:
       type: "object"
       description: "The configuration for transferring ownership of a resource to an account."
@@ -4292,9 +4397,7 @@ components:
       maximum: 1.0
       default: 1.0
     SyntheticTableSampleSeedConnectorId:
-      description: |
-        The connector id of the seed data for conditional simulation.
-        Only applicable for subject tables.
+      description: "The connector id of the seed data for conditional simulation"
       type: "string"
       readOnly: true
     SyntheticTableSampleSeedDict:
@@ -4302,13 +4405,11 @@ components:
       description: |
         The base64-encoded string derived from a json line file containing the specified sample seed data.
         This allows conditional live probing via non-python clients.
-        Only applicable for subject tables.
     SyntheticTableSampleSeedData:
       type: "string"
       description: |
         The base64-encoded string derived from a Parquet file containing the specified sample seed data.
         This allows conditional simulation as well as live probing via python clients.
-        Only applicable for subject tables.
     SyntheticTableConfiguration:
       type: "object"
       description: "The sample configuration for a synthetic table"
@@ -5180,6 +5281,122 @@ components:
       type: "string"
       description: "The URL of the account's image."
 
+    # Billing
+    BillingInfo:
+        type: "object"
+        description: "Billing information for an account."
+        properties:
+          customerPortalUri:
+            description: "The URL of the customer portal for managing billing and subscriptions."
+            type: "string"
+            format: "uri"
+          billingCycle:
+            $ref: "#/components/schemas/BillingCycle"
+          cancelsAt:
+            description: "The UTC date and time when the subscription will be canceled."
+            type: "string"
+            format: "date-time"
+          currentPlan:
+            $ref: "#/components/schemas/Plan"
+        required:
+            - "customerPortalUri"
+            - "billingCycle"
+            - "currentPlan"
+
+    BillingCycle:
+      type: "object"
+      description: "The billing cycle of the subscription."
+      properties:
+          startDate:
+            description: "The UTC date and time when the billing cycle started."
+            type: "string"
+            format: "date-time"
+          endDate:
+            description: "The UTC date and time when the billing cycle ended."
+            type: "string"
+            format: "date-time"
+
+    BillingInterval:
+      type: "string"
+      description: "The billing cycle for a plan."
+      enum:
+        - "MONTHLY"
+        - "YEARLY"
+
+    Price:
+      type: "object"
+      description: "The price information for a plan."
+      properties:
+        value:
+          type: "number"
+          format: "double"
+          description: "The price value."
+        currency:
+          type: "string"
+          description: "The currency code for the price."
+          example: "USD"
+        metadata:
+          type: "object"
+          description: "The metadata of the price."
+          additionalProperties:
+            type: "string"
+      required:
+        - "value"
+        - "currency"
+        - "metadata"
+
+    PlanId:
+      type: "string"
+      description: "The identifier of a plan."
+
+    Plan:
+      type: "object"
+      description: "A billing plan available for purchase."
+      properties:
+        id:
+          $ref: "#/components/schemas/PlanId"
+        name:
+          type: "string"
+          description: "The name of the plan."
+        billingInterval:
+          $ref: "#/components/schemas/BillingInterval"
+        price:
+          $ref: "#/components/schemas/Price"
+        paymentUrl:
+          type: "string"
+          format: "uri"
+          description: "The URL for purchasing this plan."
+        description:
+          type: "string"
+          description: "The description of the plan."
+        features:
+          type: "array"
+          items:
+            type: "string"
+            description: "The features of the plan."
+        metadata:
+          type: "object"
+          description: "The metadata of the plan."
+          additionalProperties:
+            type: "string"
+      required:
+        - "id"
+        - "name"
+        - "period"
+        - "price"
+
+    PlanUpdateConfig:
+      type: "object"
+      description: "Request to upgrade or downgrade the user's plan."
+      properties:
+        id:
+          $ref: "#/components/schemas/PlanId"
+        billingInterval:
+          $ref: "#/components/schemas/BillingInterval"
+      required:
+        - "productId"
+        - "period"
+
     # SYSTEM
     UsageReportPeriod:
       type: "object"
@@ -5193,19 +5410,6 @@ components:
           description: "The UTC date and time when the reported time period started"
           type: "string"
           format: "date-time"
-        totalDatapoints:
-          type: "integer"
-          format: "int64"
-          description: |
-            The number of datapoints generated during the reported period.
-            **Deprecated:** This field is no longer valid and will always return `-1`. It will be removed in a future version.
-          deprecated: true
-        totalRows:
-          type: "integer"
-          format: "int64"
-          description: |
-            The number of rows generated during the reported period
-            **Deprecated:** This field is no longer valid and will always return `-1`. It will be removed in a future version.
         totalCredits:
           type: "number"
           format: "double"
@@ -5218,6 +5422,10 @@ components:
           type: "number"
           format: "double"
           description: "The total virtual GPU time in seconds used during the reported period"
+        tokens:
+          type: "integer"
+          format: "int64"
+          description: "The total number of tokens consumed by chats during the reported period"
 
     FilterByUser:
       type: "string"
@@ -5228,6 +5436,16 @@ components:
       enum:
         - "ALL"
         - "ME"
+
+    CreditType:
+      type: "string"
+      description: |
+        Determines which type of credits to include in the usage report.
+        - `FREE`: Filter usage reports for free credits (natural month cycle).
+        - `PAID`: Filter usage reports for paid credits (billing cycle).
+      enum:
+        - "FREE"
+        - "PAID"
 
     #####################
     ## mostlyai-engine ##
