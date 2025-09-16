@@ -4879,6 +4879,9 @@ components:
       description: "The name/title of an artifact."
       minLength: 1
       maxLength: 256
+    ArtifactFilename:
+      type: "string"
+      description: "The filename of an artifact."
     ArtifactDescription:
       type: "string"
       description: "The description/prompt of an artifact that explains how to recreate it."
@@ -4891,6 +4894,9 @@ components:
     ArtifactShareableUrl:
       type: "string"
       description: "Public URL where the artifact can be viewed and shared."
+    ArtifactDownloadUrl:
+      type: "string"
+      description: "URL to download the artifact."
     ArtifactUsage:
       type: "object"
       description: "Usage statistics of an artifact."
@@ -4914,12 +4920,16 @@ components:
           $ref: "#/components/schemas/ArtifactId"
         name:
           $ref: "#/components/schemas/ArtifactName"
+        fileName:
+          $ref: "#/components/schemas/ArtifactFilename"
         description:
           $ref: "#/components/schemas/ArtifactDescription"
         type:
           $ref: "#/components/schemas/ArtifactType"
         preview:
           $ref: "#/components/schemas/ArtifactPreview"
+        downloadUrl:
+          $ref: "#/components/schemas/ArtifactDownloadUrl"
         shareableUrl:
           $ref: "#/components/schemas/ArtifactShareableUrl"
         usage:
