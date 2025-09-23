@@ -1529,6 +1529,7 @@ paths:
         - $ref: "#/components/parameters/filterByVisibility"
         - $ref: "#/components/parameters/filterByCreatedFrom"
         - $ref: "#/components/parameters/filterByCreatedTo"
+        - $ref: "#/components/parameters/sortByOptionsForAssistantThread"
       responses:
         "200":
           description: "OK"
@@ -2341,6 +2342,24 @@ paths:
                     items:
                       $ref: "#/components/schemas/Plan"
 
+  /billing/price/{priceId}/payment-url:
+      get:
+        parameters:
+          - $ref: "#/components/parameters/priceIdPath"
+        summary: "Retrieve payment URL for given price"
+        description: "Retrieve the payment URL for the specified price. The client should redirect the user to this URL to complete the payment process."
+        operationId: "getPaymentUrl"
+        tags: [ "Billing" ]
+        responses:
+          "200":
+            description: "OK - Payment URL successfully retrieved"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/PaymentUrl"
+          "404":
+            description: "Not Found - The specified price does not exist"
+
   /billing/subscription:
       get:
         summary: "Retrieve subscription information"
@@ -2413,6 +2432,13 @@ components:
                 description: "A human-readable error message"
 
   parameters:
+    priceIdPath:
+      name: "priceId"
+      description: "The unique identifier of the price."
+      in: "path"
+      required: true
+      schema:
+        type: "string"
 
     pageOffset:
       name: "offset"
@@ -2549,6 +2575,16 @@ components:
       schema:
         type: "string"
         format: "date"
+    sortByOptionsForAssistantThread:
+      name: "sortBy"
+      in: "query"
+      required: false
+      style: "form"
+      explode: false
+      schema:
+        type: "array"
+        items:
+          $ref: "#/components/schemas/AssistantThreadSortField"
     sortByOptionsForGenerators:
       name: "sortBy"
       in: "query"
@@ -3123,6 +3159,7 @@ components:
           $ref: "#/components/schemas/Metadata"
       required:
         - "id"
+        - "name"
     DatasetListItem:
       type: "object"
       description: "Essential dataset details for listings."
@@ -3137,6 +3174,7 @@ components:
           $ref: "#/components/schemas/Metadata"
       required:
         - "id"
+        - "name"
     DatasetConfig:
       type: "object"
       description: "The configuration for creating a dataset."
@@ -3637,6 +3675,7 @@ components:
       required:
         - "id"
         - "trainingStatus"
+        - "name"
     Generator:
       type: "object"
       description: |
@@ -3670,6 +3709,7 @@ components:
       required:
         - "id"
         - "trainingStatus"
+        - "name"
     # Source Table
     SourceTableId:
       type: "string"
@@ -3995,6 +4035,11 @@ components:
       required:
         - "sourceConnectorId"
         - "location"
+    AssistantThreadSortField:
+      type: "string"
+      enum:
+        - "RECENCY"
+        - "LAST_MESSAGE_AT"
     GeneratorSortField:
       type: "string"
       enum:
@@ -4321,6 +4366,7 @@ components:
       required:
         - "id"
         - "generationStatus"
+        - "name"
     SyntheticDataset:
       type: "object"
       description: |
@@ -4359,6 +4405,7 @@ components:
           $ref: "#/components/schemas/SyntheticDatasetRandomState"
       required:
         - "id"
+        - "name"
         - "generationStatus"
     SyntheticDatasetFormat:
       type: "string"
@@ -4649,6 +4696,7 @@ components:
           $ref: "#/components/schemas/AssistantThreadUsage"
       required:
         - "id"
+        - "name"
     AssistantThread:
       type: "object"
       description: "A assistant thread."
@@ -4699,6 +4747,7 @@ components:
           $ref: "#/components/schemas/AssistantThreadUsage"
       required:
         - "id"
+        - "name"
     AssistantMessageId:
       type: "string"
       description: "The unique identifier of a assistant message."
@@ -5337,6 +5386,9 @@ components:
       type: "object"
       description: "The price information for a plan."
       properties:
+        id:
+          type: "string"
+          description: "The unique identifier of the price."
         value:
           type: "number"
           format: "double"
@@ -5372,10 +5424,6 @@ components:
           $ref: "#/components/schemas/BillingInterval"
         price:
           $ref: "#/components/schemas/Price"
-        paymentUrl:
-          type: "string"
-          format: "uri"
-          description: "The URL for purchasing this plan."
         description:
           type: "string"
           description: "The description of the plan."
@@ -5394,6 +5442,14 @@ components:
         - "name"
         - "period"
         - "price"
+
+    PaymentUrl:
+      type: "object"
+      description: "The URL for purchasing a plan."
+      properties:
+       value:
+         type: "string"
+         format: "uri"
 
     PlanUpdateConfig:
       type: "object"
