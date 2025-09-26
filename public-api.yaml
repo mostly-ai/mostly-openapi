@@ -1691,28 +1691,28 @@ paths:
         "200":
           description: |
             The newly created messages (excluding the user message)
-            
+
             if stream=True then return stream of sever-sent events of type AssistantMessageDelta:
-            
+
               data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'ok,', finishReason: None}
               data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'I', finishReason: None}
               data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'will,', finishReason: None}
               data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'write', finishReason: None}
               data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'some', finishReason: None}
               data: {id: 'xyz1', role: 'assistant', 'contentType': 'text', delta: 'python.', finishReason: None}
-            
+
               data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r =', finishReason: None}
               data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r =', finishReason: None}
               data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: 'r', finishReason: None}
               data: {id: 'abc2', role: 'assistant', 'contentType': 'python', delta: None, finishReason: 'tool_calls'}
-            
+
               data: {id: 'def3', role: 'tool', 'contentType': 'text', delta: '3', finishReason: 'stop'}
-            
+
               data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'The', finishReason: None}
               data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'answer', finishReason: None}
               data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: 'is', finishReason: None}
               data: {id: 'ghi4', role: 'assistant', 'contentType': 'text', delta: '3!', finishReason: 'stop'}
-            
+
               data: [DONE]
           content:
             text/event-stream:
@@ -1777,7 +1777,7 @@ paths:
       description: |
         Create a shareable artifact from an assistant message.
         The assistant message must be of type `artifact/image` or `artifact/html`.
-        
+
         This endpoint will:
         1. Generate a title and description for the artifact using the previous conversation context
         2. Copy the artifact file to persistent storage
@@ -3908,6 +3908,7 @@ components:
         trainingStatus:
           $ref: "#/components/schemas/GeneratorCloneTrainingStatus"
     GeneratorCloneTrainingStatus:
+      type: "string"
       description: |
         The training status of the new generator. The available options are:
 
