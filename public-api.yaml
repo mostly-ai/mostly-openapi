@@ -1769,6 +1769,16 @@ paths:
       responses:
         "200":
           description: "OK"
+  /assistant/threads/{id}/stop:
+    parameters:
+      - $ref: "#/components/parameters/assistantThreadIdPath"
+    post:
+      summary: "Stop and delete the kernel pod for a thread"
+      operationId: "stopKernel"
+      tags: [ "Assistant" ]
+      responses:
+        "200":
+          description: "OK"
 
   # ARTIFACTS
   /artifacts:
@@ -1959,12 +1969,6 @@ paths:
           - type: KUBERNETES
             config:
               toleration: string
-          - type: DATABRICKS
-            config:
-              instanceURL: string
-              clusterID: string
-            secrets:
-              token: string
           ```
       tags: [ "Computes" ]
       requestBody:
@@ -5048,7 +5052,6 @@ components:
       description: "The type of compute."
       enum:
         - "KUBERNETES"
-        - "DATABRICKS"
     ComputeOrderIndex:
       type: "integer"
       description: "The index for determining the sort order when listing computes"
