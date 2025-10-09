@@ -195,6 +195,7 @@ paths:
             - `BIGQUERY`: `dataset.table`
             - `DATABRICKS`: `schema.table`
             - `HIVE`: `database.table`
+            - `REDSHIFT`: `schema.table`
             - `MARIADB`: `database.table`
             - `MSSQL`: `schema.table`
             - `MYSQL`: `database.table`
@@ -1617,22 +1618,6 @@ paths:
         "200":
           description: "OK"
 
-  /assistant/threads/{id}/status:
-    parameters:
-      - $ref: "#/components/parameters/assistantThreadIdPath"
-    get:
-      summary: "Get the session status of a thread"
-      operationId: "getStatus"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                type: "object"
-                properties:
-                  status:
-                    $ref: "#/components/schemas/AssistantThreadSessionStatus"
   /assistant/threads/{id}/messages:
     parameters:
       - $ref: "#/components/parameters/assistantThreadIdPath"
@@ -1782,6 +1767,34 @@ paths:
 
   # ARTIFACTS
   /artifacts:
+    get:
+      summary: "List artifacts"
+      description: |
+        Paginate through all artifacts the user has access to.
+        Only artifacts created by the user will be returned.
+      operationId: "listArtifacts"
+      tags: [ "Artifacts" ]
+      parameters:
+        - $ref: "#/components/parameters/pageOffset"
+        - $ref: "#/components/parameters/pageLimit"
+        - $ref: "#/components/parameters/filterBySearchTerm"
+        - $ref: "#/components/parameters/filterByCreatedFrom"
+        - $ref: "#/components/parameters/filterByCreatedTo"
+        - $ref: "#/components/parameters/sortByOptionsForArtifacts"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  totalCount:
+                    $ref: "#/components/schemas/PaginatedTotalCount"
+                  results:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/ArtifactListItem"
     post:
       summary: "Create artifact"
       description: |
@@ -1845,6 +1858,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Artifact"
+    delete:
+      summary: "Delete artifact"
+      operationId: "deleteArtifact"
+      tags: [ "Artifacts" ]
+      responses:
+        "200":
+          description: "OK"
 
   # USERS
   /users/me/key:
@@ -2629,6 +2649,16 @@ components:
         type: "array"
         items:
           $ref: "#/components/schemas/DatasetSortField"
+    sortByOptionsForArtifacts:
+      name: "sortBy"
+      in: "query"
+      required: false
+      style: "form"
+      explode: false
+      schema:
+        type: "array"
+        items:
+          $ref: "#/components/schemas/ArtifactSortField"
     reportType:
       name: "reportType"
       description: "Synthetic dataset report type"
@@ -3253,6 +3283,7 @@ components:
         - `BIGQUERY`: Google BigQuery cloud data warehouse
         - `HIVE`: Apache Hive database
         - `DATABRICKS`: Databricks cloud data platform
+        - `REDSHIFT`: Amazon Redshift cloud data warehouse
         - `SQLITE`: SQLite database
         - `AZURE_STORAGE`: Azure Blob Storage
         - `GOOGLE_CLOUD_STORAGE`: Google Cloud Storage
@@ -3268,6 +3299,7 @@ components:
         - "BIGQUERY"
         - "HIVE"
         - "DATABRICKS"
+        - "REDSHIFT"
         - "SQLITE"
         - "AZURE_STORAGE"
         - "GOOGLE_CLOUD_STORAGE"
@@ -3480,6 +3512,15 @@ components:
               account: string
               username: string
               warehouse: string, default: COMPUTE_WH
+              database: string
+            secrets:
+              password: string
+
+          - type: REDSHIFT
+            config:
+              host: string
+              port: integer, default: 5439
+              username: string
               database: string
             secrets:
               password: string
@@ -4622,6 +4663,11 @@ components:
         - "NO_OF_LIKES"
         - "NO_OF_DOWNLOADS"
         - "NO_OF_THREADS"
+    ArtifactSortField:
+      type: "string"
+      enum:
+        - "RECENCY"
+        - "NO_OF_THREADS"
     # ASSISTANT
     AssistantSettingsIsEnabled:
       type: "boolean"
@@ -4697,11 +4743,14 @@ components:
           $ref: "#/components/schemas/Metadata"
         name:
           $ref: "#/components/schemas/AssistantThreadName"
+        sessionStatus:
+            $ref: "#/components/schemas/AssistantThreadSessionStatus"
         usage:
           $ref: "#/components/schemas/AssistantThreadUsage"
       required:
         - "id"
         - "name"
+        - "sessionStatus"
     AssistantThread:
       type: "object"
       description: "A assistant thread."
@@ -4995,6 +5044,39 @@ components:
         - "name"
         - "description"
         - "shareableUrl"
+        - "downloadUrl"
+        - "fileName"
+    ArtifactListItem:
+      type: "object"
+      description: "Essential artifact details for listings."
+      properties:
+        id:
+          $ref: "#/components/schemas/ArtifactId"
+        name:
+          $ref: "#/components/schemas/ArtifactName"
+        fileName:
+          $ref: "#/components/schemas/ArtifactFilename"
+        description:
+          $ref: "#/components/schemas/ArtifactDescription"
+        type:
+          $ref: "#/components/schemas/ArtifactType"
+        preview:
+          $ref: "#/components/schemas/ArtifactPreview"
+        downloadUrl:
+          $ref: "#/components/schemas/ArtifactDownloadUrl"
+        shareableUrl:
+          $ref: "#/components/schemas/ArtifactShareableUrl"
+        usage:
+          $ref: "#/components/schemas/ArtifactUsage"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+      required:
+        - "id"
+        - "name"
+        - "description"
+        - "shareableUrl"
+        - "downloadUrl"
+        - "fileName"
     ArtifactConfig:
       type: "object"
       description: "Configuration for creating an artifact from an assistant message."
