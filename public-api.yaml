@@ -4832,21 +4832,7 @@ components:
         - "artifact/connector"
         - "artifact/dataset"
         - "artifact/shareable-artifact"
-    AssistantMessageDeltaContentType:
-      type: "string"
-      description: "The type of the message content"
-      enum:
-        - "text"
-        - "python"
-        - "console"
-        - "artifact/image"
-        - "artifact/data"
-        - "artifact/file"
-        - "artifact/html"
-        - "artifact/generator"
-        - "artifact/synthetic-dataset"
-        - "artifact/connector"
-        - "artifact/dataset"
+        - "compact_boundary"
     AssistantMessageContent:
       type: "string"
       minLength: 0
@@ -4944,7 +4930,7 @@ components:
         role:
           $ref: "#/components/schemas/AssistantMessageRole"
         contentType:
-          $ref: "#/components/schemas/AssistantMessageDeltaContentType"
+          $ref: "#/components/schemas/AssistantMessageContentType"
         delta:
           $ref: "#/components/schemas/AssistantMessageDeltaContent"
         finishReason:
