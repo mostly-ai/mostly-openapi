@@ -2411,7 +2411,7 @@ paths:
             "404":
                 description: "Not Found when user is not subscribed"
 
-  /mostly-websocket:
+  /websocket:
     get:
       summary: WebSocket Connection
       description: Establish a WebSocket connection.
@@ -3202,6 +3202,8 @@ components:
           $ref: "#/components/schemas/DatasetId"
         name:
           $ref: "#/components/schemas/DatasetName"
+        description:
+          $ref: "#/components/schemas/DatasetDescription"
         usage:
           $ref: "#/components/schemas/DatasetUsage"
         metadata:
@@ -3239,6 +3241,7 @@ components:
         - "RECENCY"
         - "NO_OF_LIKES"
         - "NO_OF_THREADS"
+        - "POPULARITY"
 
     # CONNECTOR
     ConnectorId:
@@ -4763,6 +4766,11 @@ components:
           $ref: "#/components/schemas/AssistantThreadName"
         sessionStatus:
           $ref: "#/components/schemas/AssistantThreadSessionStatus"
+        files:
+          type: "array"
+          description: "Files associated with an assistant thread."
+          items:
+            $ref: "#/components/schemas/AssistantThreadFile"
         messages:
           type: "array"
           description: |
@@ -4802,6 +4810,19 @@ components:
       required:
         - "id"
         - "name"
+    AssistantThreadFile:
+      type: "object"
+      description: "A file associated with an assistant thread."
+      properties:
+        path:
+          type: "string"
+        size:
+          type: "integer"
+        lastModifiedAt:
+          type: "string"
+          format: "date-time"
+      required:
+        - "path"
     AssistantMessageId:
       type: "string"
       description: "The unique identifier of a assistant message."
