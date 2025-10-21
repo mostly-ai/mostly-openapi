@@ -4818,6 +4818,7 @@ components:
           type: "string"
         size:
           type: "integer"
+          format: "int64"
         lastModifiedAt:
           type: "string"
           format: "date-time"
