@@ -1514,6 +1514,61 @@ paths:
               schema:
                 $ref: "#/components/schemas/AssistantSettings"
 
+  /assistant/settings/secrets:
+    get:
+      summary: "List current user's secret keys"
+      description: "Retrieve the list of secret key names for the current user. Secret values are never returned."
+      operationId: "getUserSecrets"
+      tags: [ "Assistant" ]
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/UserSecretKey"
+    post:
+      summary: "Create a user secret"
+      description: |
+        Create a new secret for the current user. Secrets are user-scoped environment variables injected into Python sessions.
+        
+        Limitations:
+        - Maximum 100 secrets per user
+        - Secret key must match pattern: [A-Z_][A-Z0-9_]*
+        - Secret value maximum size: 8KB
+        
+        Note: Users cannot edit an existing secret. To update, delete and recreate.
+      operationId: "createUserSecret"
+      tags: [ "Assistant" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserSecretConfig"
+      responses:
+        "200":
+          description: "OK"
+
+  /assistant/settings/secrets/{key}:
+    parameters:
+      - name: key
+        in: path
+        required: true
+        description: "The secret key name"
+        schema:
+          $ref: "#/components/schemas/UserSecretKey"
+    delete:
+      summary: "Delete a user secret"
+      description: "Delete a secret for the current user. The secret will no longer be available in future Python sessions."
+      operationId: "deleteUserSecret"
+      tags: [ "Assistant" ]
+      responses:
+        "200":
+          description: "OK"
+
   /assistant/threads:
     get:
       summary: "List assistant threads"
@@ -2902,6 +2957,11 @@ components:
           description: "The organizations the user belongs to"
           items:
             $ref: "#/components/schemas/OrganizationListItem"
+        secrets:
+          type: "array"
+          description: "The list of secret key names for this user (secret values are never exposed via API)"
+          items:
+            $ref: "#/components/schemas/UserSecretKey"
 
     UserPlan:
       type: "string"
@@ -2945,6 +3005,29 @@ components:
         aboutModelMessage:
           description: "The instruction how the Assistant should respond"
           type: "string"
+    UserSecretKey:
+      type: "string"
+      description: |
+        The name of a user secret environment variable.
+        Must match pattern: [A-Z_][A-Z0-9_]*
+        Examples: MY_API_KEY, DATABASE_PASSWORD, AWS_SECRET_KEY
+      pattern: "^[A-Z_][A-Z0-9_]*$"
+      maxLength: 255
+      example: "MY_API_KEY"
+    UserSecretConfig:
+      type: "object"
+      description: "Request body for creating a new user secret"
+      required:
+        - key
+        - value
+      properties:
+        key:
+          $ref: "#/components/schemas/UserSecretKey"
+        value:
+          type: "string"
+          description: "The secret value (will be encrypted and stored securely)"
+          maxLength: 8192
+          example: "sk-1234567890abcdef"
     UsageCreditStats:
       type: "object"
       description: "User credits statistics and limits for the current user."
