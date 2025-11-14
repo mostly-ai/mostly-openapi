@@ -2962,7 +2962,14 @@ components:
           description: "The list of secret key names for this user (secret values are never exposed via API)"
           items:
             $ref: "#/components/schemas/UserSecretKey"
-
+        createdAt:
+            type: "string"
+            format: "date-time"
+            description: "The UTC date and time when the user has been created."
+        lastActivityAt:
+            type: "string"
+            format: "date-time"
+            description: "The UTC date and time of users last activity"
     UserPlan:
       type: "string"
       description: "The type of the user subscription plan."
