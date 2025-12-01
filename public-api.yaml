@@ -4992,6 +4992,10 @@ components:
           type: "integer"
           format: "int64"
           description: "The number of tokens consumed by the assistant message."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "The UTC date and time when the message was created."
     ErrorMessage:
       type: "object"
       description: "An error message"
