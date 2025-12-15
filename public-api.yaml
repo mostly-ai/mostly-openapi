@@ -49,6 +49,8 @@ tags:
     description: "Organization management"
   - name: "Artifacts"
     description: "Shareable artifacts from assistant chats"
+  - name: "Integrations"
+    description: "OAuth2-based integrations with external services"
   - name: "Billing"
     description: "Manage all billing-related operations"
 
@@ -1921,6 +1923,179 @@ paths:
         "200":
           description: "OK"
 
+  # INTEGRATIONS
+  /integrations/providers:
+    get:
+      summary: "Get all integration providers configuration (Superadmin only)"
+      description: |
+        Retrieve the complete configuration of all OAuth2 integration providers including scopes.
+        This endpoint is only accessible to superadmins.
+        Note: Sensitive fields like clientSecret will be included in the response.
+      operationId: "getIntegrationProviders"
+      tags: [ "Integrations" ]
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationProvidersConfigList"
+    post:
+      summary: "Replace all integration providers (Superadmin only)"
+      description: |
+        Replace all OAuth2 integration providers with the provided list.
+        This endpoint is only accessible to superadmins.
+        
+        **Warning:** This operation will delete ALL existing integration providers 
+        and their associated scopes, then create the new ones provided in the request.
+        All operations are performed in a single transaction.
+      operationId: "createIntegrationProviders"
+      tags: [ "Integrations" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntegrationProvidersConfigList"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  createdProviders:
+                    type: "array"
+                    items:
+                      type: "string"
+                    description: "List of provider IDs that were created or updated"
+
+  /integrations:
+    get:
+      summary: "List all integration providers with connection status"
+      description: |
+        List all available OAuth2 integration providers with their connection status for the current user.
+        Providers that are connected show status CONNECTED/EXPIRED/ERROR with integration details.
+        Providers that are not connected show status NOT_CONNECTED.
+        Once connected, integrations are automatically available in all assistant threads.
+      operationId: "listIntegrations"
+      tags: [ "Integrations" ]
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Integration"
+
+  /integrations/{providerId}/authorize:
+    parameters:
+      - $ref: "#/components/parameters/integrationProviderIdPath"
+    post:
+      summary: "Generate OAuth authorization URL"
+      description: |
+        Generate an OAuth authorization URL for a specific provider.
+        Returns a direct URL to the provider's OAuth authorization endpoint (e.g., Google, Slack, GitHub).
+        The URL includes all required parameters (client_id, redirect_uri, response_type, scope, state)
+        configured for the provider.
+
+        The user should be redirected to this URL to grant authorization. After authorization,
+        the provider will redirect back to your configured redirect_uri with an authorization code.
+      operationId: "generateAuthorizationUrl"
+      tags: [ "Integrations" ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntegrationAuthorizationRequest"
+            examples:
+              google:
+                summary: "Google OAuth"
+                value:
+                  redirectUri: "https://yourapp.com/oauth/callback"
+              slack:
+                summary: "Slack OAuth"
+                value:
+                  redirectUri: "https://yourapp.com/oauth/callback"
+              github:
+                summary: "GitHub OAuth with custom state"
+                value:
+                  redirectUri: "https://yourapp.com/oauth/callback"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  authorizationUrl:
+                    type: "string"
+                    format: "uri"
+                    description: "Complete OAuth authorization URL to redirect the user to. Includes all required query parameters (client_id, redirect_uri, scope, state, etc.)"
+                    example: "https://accounts.google.com/o/oauth2/auth?client_id=123456.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fyourapp.com%2Fcallback&response_type=code&state=random-security-token&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly"
+                required:
+                  - "authorizationUrl"
+        "400":
+          description: "Bad Request - Invalid provider or missing configuration"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "string"
+                    example: "OAuth provider 'invalid-provider' is not configured"
+
+  /integrations/{providerId}:
+    parameters:
+      - $ref: "#/components/parameters/integrationProviderIdPath"
+    get:
+      summary: "Get integration details"
+      description: "Retrieve details of a specific integration connection by provider ID."
+      operationId: "getIntegration"
+      tags: [ "Integrations" ]
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Integration"
+    delete:
+      summary: "Disconnect integration"
+      description: |
+        Disconnect an integration by revoking tokens and removing access.
+        The integration will no longer be available in any assistant threads.
+      operationId: "deleteIntegration"
+      tags: [ "Integrations" ]
+      responses:
+        "200":
+          description: "OK"
+
+  /integrations/{providerId}/refresh:
+    parameters:
+      - $ref: "#/components/parameters/integrationProviderIdPath"
+    post:
+      summary: "Refresh integration OAuth token"
+      description: |
+        Refresh the OAuth access token for an integration.
+        If the integration has a refresh token, it will be used to obtain new access tokens.
+        If no refresh token exists, a new authorization flow must be initiated.
+      operationId: "refreshIntegrationToken"
+      tags: [ "Integrations" ]
+      responses:
+        "204":
+          description: "Token refreshed successfully"
+        "400":
+          description: "Bad Request - No refresh token available"
+        "404":
+          description: "Integration not found"
+
   # USERS
   /users/me/key:
     put:
@@ -2799,6 +2974,14 @@ components:
       required: true
       schema:
         type: "string"
+    integrationProviderIdPath:
+      name: "providerId"
+      description: "The provider identifier of an integration."
+      in: "path"
+      required: true
+      schema:
+        type: "string"
+        example: "google"
     computeIdPath:
       name: "id"
       description: "The unique identifier of a compute."
@@ -3157,6 +3340,189 @@ components:
         - "RESOURCE_LIKED"
         - "RESOURCE_FAILED"
         - "MEMBER_JOINED"
+    Integration:
+      type: "object"
+      description: "An OAuth2 integration provider with connection status. If connected, includes integration details. If not connected, shows NOT_CONNECTED status."
+      properties:
+        providerId:
+          type: "string"
+          description: "The provider identifier"
+          example: "google"
+        providerName:
+          type: "string"
+          description: "Display name of the provider"
+          example: "Google"
+        icon:
+          type: "string"
+          description: "svg image"
+        isPromoted:
+          type: "boolean"
+          description: "Whether this provider is promoted in the UI"
+          example: true
+        scopeIds:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
+          description: "List of IDs of the currently connected scopes (empty if not connected)"
+          example: ["550e8400-e29b-41d4-a716-446655440000"]
+        availableScopes:
+          type: "array"
+          description: "List of all available scopes for this provider"
+          items:
+            $ref: "#/components/schemas/IntegrationScope"
+        status:
+          $ref: "#/components/schemas/IntegrationStatus"
+      required:
+        - "providerId"
+        - "providerName"
+        - "availableScopes"
+        - "status"
+    IntegrationStatus:
+      type: "string"
+      description: "Status of an integration connection"
+      enum:
+        - "CONNECTED"
+        - "NOT_CONNECTED"
+    IntegrationScope:
+      type: "object"
+      description: "OAuth scope information for an integration"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "Unique identifier for the scope"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: "string"
+          description: "Display name of the scope"
+          example: "Google Drive (Read Only)"
+        description:
+          type: "string"
+          description: "Description of what this scope allows"
+          example: "Read-only access to your Google Drive files"
+        value:
+          type: "string"
+          description: "The actual OAuth scope value"
+          example: "https://www.googleapis.com/auth/drive.readonly"
+      required:
+        - "id"
+        - "name"
+        - "value"
+    IntegrationAuthorizationRequest:
+      type: "object"
+      description: "Request to generate an OAuth authorization URL"
+      properties:
+        scopeIds:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
+          description: "List of scope identifiers for this integration"
+          example: ["550e8400-e29b-41d4-a716-446655440000"]
+          minItems: 1
+      required:
+        - "provider"
+        - "scopeIds"
+    IntegrationProvidersConfigList:
+      type: "object"
+      description: "Configuration to create or update multiple integration providers"
+      properties:
+        providers:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/IntegrationProvidersConfig"
+      required:
+        - "providers"
+    IntegrationProvidersConfig:
+      type: "object"
+      description: "Configuration for a single integration provider"
+      properties:
+        id:
+          type: "string"
+          description: "Unique identifier for the provider"
+          example: "google"
+        name:
+          type: "string"
+          description: "Display name of the provider"
+          example: "Google"
+        description:
+          type: "string"
+          description: "Description of the provider"
+          example: "Connect to Google services"
+        icon:
+          type: "string"
+          description: "svg image"
+        isPromoted:
+          type: "boolean"
+          description: "Whether this provider is promoted in the UI"
+        authorizationUrl:
+          type: "string"
+          description: "OAuth authorization endpoint URL"
+          example: "https://accounts.google.com/o/oauth2/v2/auth"
+        accessTokenUrl:
+          type: "string"
+          description: "OAuth token endpoint URL"
+          example: "https://oauth2.googleapis.com/token"
+        scopes:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ProviderScopeConfig"
+          description: "Available OAuth scopes for this provider"
+        additionalParams:
+          type: "object"
+          additionalProperties:
+            type: "string"
+          description: "Additional parameters to include in OAuth requests"
+        clientId:
+          type: "string"
+          description: "OAuth client ID"
+          example: "your-client-id"
+        clientSecret:
+          type: "string"
+          description: "OAuth client secret"
+          example: "your-client-secret"
+        scopeDelimiter:
+          type: "string"
+          description: "Delimiter used to join multiple scope values (e.g., space for GitHub, comma for others)"
+          example: " "
+          default: " "
+      required:
+        - "id"
+        - "name"
+        - "authorizationUrl"
+        - "accessTokenUrl"
+        - "clientId"
+        - "clientSecret"
+    ProviderScopeConfig:
+      type: "object"
+      description: "OAuth scope definition"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "Unique identifier for the scope"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: "string"
+          description: "Display name of the scope"
+          example: "Google Drive (Read Only)"
+        description:
+          type: "string"
+          description: "Description of what this scope allows"
+          example: "Read-only access to your Google Drive files"
+        value:
+          type: "string"
+          description: "The actual OAuth scope value"
+          example: "https://www.googleapis.com/auth/drive.readonly"
+        isDefault:
+          type: "boolean"
+          description: "Whether this scope is selected by default"
+          default: false
+      required:
+        - "id"
+        - "name"
+        - "value"
     Metadata:
       type: "object"
       description: "The metadata of a resource."
@@ -4944,6 +5310,7 @@ components:
         - "artifact/connector"
         - "artifact/dataset"
         - "artifact/shareable-artifact"
+        - "artifact/integration"
         - "compact_boundary"
     AssistantMessageContent:
       type: "string"
